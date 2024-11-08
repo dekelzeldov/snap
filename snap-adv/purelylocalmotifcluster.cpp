@@ -1,4 +1,4 @@
-#include "localmotifcluster.h"
+#include "purelylocalmotifcluster.h"
 #include "stdafx.h"
 
 
@@ -10,6 +10,7 @@
 //   }
 //   printf("]\n");
 // }
+
 
 
 
@@ -152,16 +153,16 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     for (TUNGraph::TEdgeI EI = G->BegEI(); EI < G->EndEI(); EI ++ ) {
       int SrcNId = EI.GetSrcNId();
       int DstNId = EI.GetDstNId();
-      Counts[SrcNId](DstNId)[level-1] ++;
-      Counts[DstNId](SrcNId)[level-1] ++;
+      Counts(SrcNId)(DstNId)[level-1] ++;
+      Counts(DstNId)(SrcNId)[level-1] ++;
     }
   }
   for (TUNGraph::TNodeI NI = G->BegNI(); NI < G->EndNI(); NI ++ ) {
     int NodeId = NI.GetId();
     int degHere = NI.GetOutDeg();
     for (int i = 0; i < level; i ++) {
-      Counts[PrevNodes[i]](NodeId)[level-1] += degHere;
-      Counts[NodeId](PrevNodes[i])[level-1] += degHere;
+      Counts(PrevNodes[i])(NodeId)[level-1] += degHere;
+      Counts(NodeId)(PrevNodes[i])[level-1] += degHere;
     }
 
     if (level == KSize - 2) {
@@ -180,8 +181,8 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     int numEdges = subGraph->GetEdges();
     for (int i = 0; i <= level; i ++) {
       for (int j = i + 1; j <= level; j ++) {
-        Counts[PrevNodes[i]](PrevNodes[j])[level] += numEdges;
-        Counts[PrevNodes[j]](PrevNodes[i])[level] += numEdges;
+        Counts(PrevNodes[i])(PrevNodes[j])[level] += numEdges;
+        Counts(PrevNodes[j])(PrevNodes[i])[level] += numEdges;
       }
     }
     countClique(subGraph, KSize, PrevNodes, level + 1);
@@ -201,19 +202,20 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
     for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
       int NodeId = NI.GetId();
       for (int e = 0; e < NI.GetOutDeg(); e++) {
-        Weights[NodeId](NI.GetOutNId(e)) = 1;
+        Weights(NodeId)(NI.GetOutNId(e)) = 1;
       }
-      Weights[NodeId](NodeId) = NI.GetOutDeg();
+      Weights(NodeId)(NodeId) = NI.GetOutDeg();
     }
     TotalVol = 2 * Graph_org->GetEdges();
   } else { 
-    if (Counts.Len() == 0 || Counts.BegI()->Len() == 0 || Counts.BegI()->BegI()->Dat.Len() < KSize - 2) {
+    // KSize > 2
+    if (Counts.Len() == 0 || Counts.BegI()->Dat.Len() == 0 || Counts.BegI()->Dat.BegI()->Dat.Len() < KSize - 2) {
       // If the KSize-clique has not been counted yet, then we count.
       Counts = CountVH(Graph_org->GetMxNId());
       for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
         int NodeId = NI.GetId();
         for (int e = 0; e < NI.GetOutDeg(); e++) {
-          Counts[NodeId](NI.GetOutNId(e)) = TIntV(KSize - 2);
+          Counts(NodeId)(NI.GetOutNId(e)) = TIntV(KSize - 2);
         }
       }
       TIntV PrevNodes(KSize - 2);
@@ -227,15 +229,15 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
       float deg_w = 0;
       for (int e = 0; e < NI.GetOutDeg(); e++) {
         int NbrId = NI.GetOutNId(e);
-        int MtfCntHere = Counts[NodeId](NbrId)[KSize-3];
+        int MtfCntHere = Counts(NodeId)(NbrId)[KSize-3];
         if (MtfCntHere) {
-          Weights[NodeId](NbrId) = MtfCntHere;
+          Weights(NodeId)(NbrId) = MtfCntHere;
           deg_w += MtfCntHere;
         } else {
           Graph_trans->DelEdge(NodeId, NbrId);
         }
       }
-      Weights[NodeId](NodeId) = deg_w;
+      Weights(NodeId)(NodeId) = deg_w;
       TotalVol += deg_w;
     }
   }
@@ -401,7 +403,7 @@ void ProcessedGraph::countDirTriadMotif(PNGraph graph) {
   for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
     int NodeId = NI.GetId();
     for (int e = 0; e < NI.GetOutDeg(); e++) {
-      Counts[NodeId](NI.GetOutNId(e)) = TIntV(numBasicDirMtf);
+      Counts(NodeId)(NI.GetOutNId(e)) = TIntV(numBasicDirMtf);
     }
   }
   for (TNGraph::TNodeI NI = graph->BegNI(); NI < graph->EndNI(); NI ++ ) {
@@ -411,22 +413,22 @@ void ProcessedGraph::countDirTriadMotif(PNGraph graph) {
       long nbrID = NI.GetOutNId(e);
       if (higherDeg(graph, nodeID, nbrID)) {
         neighborsID.Add(nbrID);
-        Counts[nodeID](nbrID)[0] ++;
-        Counts[nbrID](nodeID)[0] ++;
+        Counts(nodeID)(nbrID)[0] ++;
+        Counts(nbrID)(nodeID)[0] ++;
       }
     }
     for (long e = 0; e < NI.GetInDeg(); e++) {
       long nbrID = NI.GetInNId(e);
       if (higherDeg(graph, nodeID, nbrID)) {
         if (graph->IsEdge(nodeID, nbrID)) {
-          Counts[nodeID](nbrID)[0] --;
-          Counts[nbrID](nodeID)[0] --;
-          Counts[nodeID](nbrID)[1] ++;
-          Counts[nbrID](nodeID)[1] ++;
+          Counts(nodeID)(nbrID)[0] --;
+          Counts(nbrID)(nodeID)[0] --;
+          Counts(nodeID)(nbrID)[1] ++;
+          Counts(nbrID)(nodeID)[1] ++;
         } else {
           neighborsID.Add(nbrID);
-          Counts[nodeID](nbrID)[0] ++;
-          Counts[nbrID](nodeID)[0] ++;
+          Counts(nodeID)(nbrID)[0] ++;
+          Counts(nbrID)(nodeID)[0] ++;
         }
       }
     }
@@ -438,12 +440,12 @@ void ProcessedGraph::countDirTriadMotif(PNGraph graph) {
       if (srcNId > dstNId || !subGraph->IsEdge(dstNId, srcNId)) {
         MotifNumber = checkTriadMotif(graph, nodeID, srcNId, dstNId);
         MotifNumber ++;
-        Counts[nodeID](srcNId)[MotifNumber] ++;
-        Counts[srcNId](nodeID)[MotifNumber] ++;
-        Counts[nodeID](dstNId)[MotifNumber] ++;
-        Counts[dstNId](nodeID)[MotifNumber] ++;
-        Counts[srcNId](dstNId)[MotifNumber] ++;
-        Counts[dstNId](srcNId)[MotifNumber] ++;
+        Counts(nodeID)(srcNId)[MotifNumber] ++;
+        Counts(srcNId)(nodeID)[MotifNumber] ++;
+        Counts(nodeID)(dstNId)[MotifNumber] ++;
+        Counts(dstNId)(nodeID)[MotifNumber] ++;
+        Counts(srcNId)(dstNId)[MotifNumber] ++;
+        Counts(dstNId)(srcNId)[MotifNumber] ++;
       }
     }
   }
@@ -508,19 +510,19 @@ void ProcessedGraph::assignWeights_dir(MotifType mt) {
     float deg_w = 0;
     for (int e = 0; e < NI.GetOutDeg(); e++) {
       int NbrId = NI.GetOutNId(e);
-      TIntV& CountHere = Counts[NodeId](NbrId);
+      TIntV& CountHere = Counts(NodeId)(NbrId);
       int WeightHere = 0;
       for (int i = 0; i < MtfInclude.Len(); i ++) {
         WeightHere += CountHere[MtfInclude[i]];
       }
       if (WeightHere) {
-        Weights[NodeId](NbrId) = WeightHere;
+        Weights(NodeId)(NbrId) = WeightHere;
         deg_w += WeightHere;
       } else {
         Graph_trans->DelEdge(NodeId, NbrId);
       }
     }
-    Weights[NodeId](NodeId) = deg_w;
+    Weights(NodeId)(NodeId) = deg_w;
     TotalVol += deg_w;
   }
 
@@ -533,7 +535,7 @@ void ProcessedGraph::printCounts() {
     int NodeId = NI.GetId();
     for (int e = 0; e < NI.GetOutDeg(); e++) {
       int NbrId = NI.GetOutNId(e);
-      TIntV& CountThisEdge = Counts[NodeId](NbrId);
+      TIntV& CountThisEdge = Counts(NodeId)(NbrId);
       printf("(%d, %d): ", NodeId, NbrId);
       for (int i = 0; i < CountThisEdge.Len(); i ++) {
         int output = CountThisEdge[i];
@@ -550,15 +552,15 @@ void ProcessedGraph::printWeights() {
     for (int e = 0; e < NI.GetOutDeg(); e++) {
       int NbrId = NI.GetOutNId(e);
       printf("(%d, %d): ", NodeId, NbrId);
-      if (Weights[NodeId].IsKey(NbrId)) {
-        float weight = Weights[NodeId](NbrId);
+      if (Weights(NodeId).IsKey(NbrId)) {
+        float weight = Weights(NodeId)(NbrId);
         printf("%.2f ", weight);
       } else {
         printf("Not a key in Weights");
       }
       printf("\n");
     }
-    float d_w = Weights[NodeId](NodeId);
+    float d_w = Weights(NodeId)(NodeId);
     printf("\td_w(%d) = %.2f.\n", NodeId, d_w);
   }
   printf("Total volume = %.2f. \n", TotalVol);
@@ -591,7 +593,7 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
   NumPushs = 0;
   appr_norm = 0;
   const WeightVH& Weights = graph_p.getWeights();
-  if (Weights[SeedNodeId].GetDat(SeedNodeId) * eps >= 1) {
+  if (Weights.GetDat(SeedNodeId).GetDat(SeedNodeId) * eps >= 1) {
     appr_vec(SeedNodeId) = 0;
     return;
   }
@@ -604,7 +606,7 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
     int NodeId = NodesWExcesRes.Top();
     NodesWExcesRes.Pop();
 
-    float deg_w = Weights[NodeId].GetDat(NodeId);
+    float deg_w = Weights.GetDat(NodeId).GetDat(NodeId);
     if (deg_w == 0) {
       appr_vec(NodeId) += residual(NodeId);
       appr_norm += residual(NodeId);
@@ -621,9 +623,9 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
     for (int i = 0; i < NI.GetOutDeg(); i ++) {
       int NbrId = NI.GetOutNId(i);
       float nbrValOld = residual(NbrId);
-      float nbrValNew = nbrValOld + pushVal * Weights[NodeId].GetDat(NbrId);
+      float nbrValNew = nbrValOld + pushVal * Weights.GetDat(NodeId).GetDat(NbrId);
       residual(NbrId) = nbrValNew;
-      if (nbrValOld <= eps * Weights[NbrId].GetDat(NbrId)  &&  nbrValNew > eps * Weights[NbrId].GetDat(NbrId)) {
+      if (nbrValOld <= eps * Weights.GetDat(NbrId).GetDat(NbrId)  &&  nbrValNew > eps * Weights.GetDat(NbrId).GetDat(NbrId)) {
         NodesWExcesRes.Push(NbrId);
       }
     }
@@ -639,7 +641,7 @@ void MAPPR::computeProfile(const ProcessedGraph& graph_p) {
   const WeightVH& Weights = graph_p.getWeights();
   for (THash<TInt, TFlt>::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
     int NodeId = it->Key;
-    Quotient(NodeId) = it->Dat / Weights[NodeId].GetDat(NodeId);
+    Quotient(NodeId) = it->Dat / Weights.GetDat(NodeId).GetDat(NodeId);
   }
   Quotient.SortByDat(false);
 
@@ -651,7 +653,7 @@ void MAPPR::computeProfile(const ProcessedGraph& graph_p) {
   for (THash<TInt, TFlt>::TIter it = Quotient.BegI(); it < Quotient.EndI(); it++) {
     int NodeId = it->Key;
     TUNGraph::TNodeI NI = graph_p.getTransformedGraph()->GetNI(NodeId);
-    const THash<TInt, TFlt>& WeightsHere = Weights[NodeId];
+    const THash<TInt, TFlt>& WeightsHere = Weights.GetDat(NodeId);
 
     NodeInOrder.Add(NodeId);
     IsIn.AddKey(NodeId);

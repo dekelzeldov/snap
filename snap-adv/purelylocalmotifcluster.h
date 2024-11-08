@@ -3,8 +3,8 @@
 
 #include "Snap.h"
 
-typedef TVec< THash<TInt, TFlt> > WeightVH;
-typedef TVec< THash<TInt, TIntV> > CountVH;
+typedef THash<TInt, THash<TInt, TFlt> > WeightVH;
+typedef THash<TInt, THash<TInt, TIntV> > CountVH;
 
 
 /*
