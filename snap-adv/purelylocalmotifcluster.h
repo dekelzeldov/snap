@@ -84,6 +84,7 @@ class ProcessedGraph {
   // Input {TIntV& PrevNodes} denotes a set of nodes that are directed connected to any node in the current graph G
   //    and {int level = PrevNodes.Len()} is the number of PreNodes. Therefore, any k-clique in G corresponds to 
   //    a (k+level)-clique after all nodes in PrevNodes are added in the current graph G.
+  void countClique(PUNGraph& G, TUNGraph::TNodeI& NI, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
   void countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int level);
 
   // This function counts the directed graph motif instances on each edge.

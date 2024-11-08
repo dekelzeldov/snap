@@ -120,6 +120,7 @@ ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   assignWeights_undir(mt);
 }
 
+
 // This function will return true if degree of nodeID1 is higher than nodeID2.
 // If the degrees equal, it will return true if nodeID1 > nodeID2.
 // Used in ChibaNishizeki's clique enumeration method
@@ -136,6 +137,25 @@ bool higherDeg(PUNGraph& G, TUNGraph::TNodeI& NI1, int nodeID2) {
 bool higherDeg(PUNGraph& G, int nodeID1, int nodeID2) {
   TUNGraph::TNodeI NI1 = G->GetNI(nodeID1);
   return higherDeg(G, NI1, nodeID2);
+}
+
+// This function counts the undirected graph motif (clique) instances on each edge of a node.
+void ProcessedGraph::countClique(PUNGraph& G, TUNGraph::TNodeI& NI, int KSize, TIntV& PrevNodes) {
+  // Each edge means a (level+2)-clique in the original graph!
+  int NodeId = NI.GetId();
+  int degHere = NI.GetOutDeg();
+
+  // Go to the next level
+  PrevNodes[0] = NodeId;
+  TIntV neighborsID;
+  for (int e = 0; e < NI.GetOutDeg(); e++) {
+    int nbrID = NI.GetOutNId(e);
+    if (higherDeg(G, NodeId, nbrID)) {
+        neighborsID.Add(nbrID);
+    }
+  }
+  PUNGraph subGraph = TSnap::GetSubGraph(G, neighborsID);
+  countClique(subGraph, KSize, PrevNodes, 1);
 }
 
 // This function counts the undirected graph motif (clique) instances on each edge.
@@ -219,7 +239,9 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
         }
       }
       TIntV PrevNodes(KSize - 2);
-      countClique(Graph_org, KSize, PrevNodes, 0);
+      for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
+        countClique(Graph_org, NI, KSize, PrevNodes);
+      }
     }
 
     // Now we assign weights!
