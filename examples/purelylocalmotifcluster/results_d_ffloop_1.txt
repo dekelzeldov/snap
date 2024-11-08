@@ -1,4 +1,4 @@
-Local motif clustering. build: 12:51:45, Nov  8 2024. Time: 12:52:20 [Nov  4 2024]
+Local motif clustering. build: 12:51:45, Nov  8 2024. Time: 13:41:11 [Nov  4 2024]
 ==================================================================================
 Directed graph? (-d:)=Yes
 Input graph file (-i:)=C-elegans-frontal.txt
@@ -127,4 +127,4 @@ Size	NodeId	Conductance
 116	119	1.0000000
 Size of Cluster: 7.
 
-run time: 0.01s (12:52:20)
+run time: 0.01s (13:41:11)
