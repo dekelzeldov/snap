@@ -140,22 +140,26 @@ bool higherDeg(PUNGraph& G, int nodeID1, int nodeID2) {
 }
 
 // This function counts the undirected graph motif (clique) instances on each edge of a node.
-void ProcessedGraph::countClique(PUNGraph& G, TUNGraph::TNodeI& NI, int KSize, TIntV& PrevNodes) {
+void ProcessedGraph::countClique(PUNGraph& G, int nodeID, int KSize, TIntV& PrevNodes) {
   // Each edge means a (level+2)-clique in the original graph!
-  int NodeId = NI.GetId();
+  if (Computed[nodeID]) {
+    return;
+  }
+  TUNGraph::TNodeI NI = G->GetNI(nodeID);
   int degHere = NI.GetOutDeg();
 
   // Go to the next level
-  PrevNodes[0] = NodeId;
+  PrevNodes[0] = nodeID;
   TIntV neighborsID;
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int nbrID = NI.GetOutNId(e);
-    if (higherDeg(G, NodeId, nbrID)) {
+    if (higherDeg(G, nodeID, nbrID)) {
         neighborsID.Add(nbrID);
     }
   }
   PUNGraph subGraph = TSnap::GetSubGraph(G, neighborsID);
   countClique(subGraph, KSize, PrevNodes, 1);
+  Computed[nodeID] = true;
 }
 
 // This function counts the undirected graph motif (clique) instances on each edge.
@@ -179,6 +183,10 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
   }
   for (TUNGraph::TNodeI NI = G->BegNI(); NI < G->EndNI(); NI ++ ) {
     int NodeId = NI.GetId();
+    if (!Computed[NodeId]) {
+      Dependants(PrevNodes[0])(NodeId) = true;
+    } 
+
     int degHere = NI.GetOutDeg();
     for (int i = 0; i < level; i ++) {
       Counts(PrevNodes[i])(NodeId)[level-1] += degHere;
@@ -232,6 +240,9 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
     if (Counts.Len() == 0 || Counts.BegI()->Dat.Len() == 0 || Counts.BegI()->Dat.BegI()->Dat.Len() < KSize - 2) {
       // If the KSize-clique has not been counted yet, then we count.
       Counts = CountVH(Graph_org->GetMxNId());
+      Dependants = DependVH(Graph_org->GetMxNId());
+      Computed = TVec<bool>(Graph_org->GetMxNId());
+      Computed.PutAll(false);
       for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
         int NodeId = NI.GetId();
         for (int e = 0; e < NI.GetOutDeg(); e++) {
@@ -240,7 +251,13 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
       }
       TIntV PrevNodes(KSize - 2);
       for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-        countClique(Graph_org, NI, KSize, PrevNodes);
+        int NIID = NI.GetId();
+        countClique(Graph_org, NIID, KSize, PrevNodes);
+        while (Dependants(NIID).BegI() < Dependants(NIID).EndI()) {
+          int key = Dependants(NIID).BegI().GetKey();
+          Dependants(NIID).DelKey(key);
+          countClique(Graph_org, key, KSize, PrevNodes);
+        }
       }
     }
 

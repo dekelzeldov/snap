@@ -5,6 +5,7 @@
 
 typedef THash<TInt, THash<TInt, TFlt> > WeightVH;
 typedef THash<TInt, THash<TInt, TIntV> > CountVH;
+typedef THash<TInt, THash<TInt, bool> > DependVH;
 
 
 /*
@@ -74,7 +75,15 @@ class ProcessedGraph {
   WeightVH Weights;     // The weights of the weighted graph
                         // Weights[u].GetDat(v) is the weight of edge (u, v)
                         // Weights[u].GetDat(u) is the weighted degree of node u
+  
+  TVec<bool> Computed;  // To check whether the motif counts have been computed for each edge.
+                        // Computed[u] is true if the motif counts for node u and all its out going edges have been computed.
 
+  DependVH Dependants;  // So the dependants of each node, i.e., the nodes that are needed to be computed to complet the computation of the node.
+                        // Dependants[u](v) is true if the motif counts for node u depends on compliting the computaion of node v, 
+                        //    and node v hasn't been yet computed at the time that u was computed.
+
+  float TotalVolLB;     // Lower bouond for the total volume of the whole graph, needed in computing the conductance, based on the computed motif counts
   float TotalVol;       // The total volume of the whole graph, needed in computing the conductance
 
 
@@ -84,7 +93,7 @@ class ProcessedGraph {
   // Input {TIntV& PrevNodes} denotes a set of nodes that are directed connected to any node in the current graph G
   //    and {int level = PrevNodes.Len()} is the number of PreNodes. Therefore, any k-clique in G corresponds to 
   //    a (k+level)-clique after all nodes in PrevNodes are added in the current graph G.
-  void countClique(PUNGraph& G, TUNGraph::TNodeI& NI, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
+  void countClique(PUNGraph& G, int nodeID, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
   void countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int level);
 
   // This function counts the directed graph motif instances on each edge.
