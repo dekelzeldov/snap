@@ -83,6 +83,7 @@ class ProcessedGraph {
                         // Dependants[u](v) is true if the motif counts for node u depends on compliting the computaion of node v, 
                         //    and node v hasn't been yet computed at the time that u was computed.
 
+  MotifType mt;         // The motif type that we are to count on the graph
   float TotalVolLB;     // Lower bouond for the total volume of the whole graph, needed in computing the conductance, based on the computed motif counts
   float TotalVol;       // The total volume of the whole graph, needed in computing the conductance
 
@@ -113,7 +114,8 @@ class ProcessedGraph {
   //  1) counts motifs on each pair of nodes
   //  2) assign weights
   //  3) obtain the transformed graph
-  void assignWeights_undir(MotifType mt);
+  void assignWeights_undir();
+  void assignWeights_undir(int nodeID);
   void assignWeights_dir(MotifType mt);
 
   // Output and printing
@@ -121,6 +123,8 @@ class ProcessedGraph {
   PUNGraph getTransformedGraph() const {return Graph_trans; };
   CountVH getCounts() const { return Counts; };
   const WeightVH& getWeights() const { return Weights; };
+  // float totalVolume_lte(float value) const;
+  // float getTotalVolume() const;
   float getTotalVolume() const { return TotalVol; };
   void printCounts();
   void printWeights();

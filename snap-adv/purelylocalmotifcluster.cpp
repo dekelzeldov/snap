@@ -117,7 +117,8 @@ Section: Preprocessing unweighted graphs, including:
 // Initializing for undirected graph input.
 ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   Graph_org = graph;
-  assignWeights_undir(mt);
+  this->mt = mt;
+  assignWeights_undir();
 }
 
 
@@ -153,6 +154,9 @@ void ProcessedGraph::countClique(PUNGraph& G, int nodeID, int KSize, TIntV& Prev
   TIntV neighborsID;
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int nbrID = NI.GetOutNId(e);
+    if (!Computed[nbrID]) {
+      Dependants(nodeID)(nbrID) = true;
+    } 
     if (higherDeg(G, nodeID, nbrID)) {
         neighborsID.Add(nbrID);
     }
@@ -177,19 +181,19 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     for (TUNGraph::TEdgeI EI = G->BegEI(); EI < G->EndEI(); EI ++ ) {
       int SrcNId = EI.GetSrcNId();
       int DstNId = EI.GetDstNId();
+      Counts(SrcNId)(DstNId) = Counts(SrcNId).GetDatWithDefault(DstNId, TIntV(KSize - 2));
       Counts(SrcNId)(DstNId)[level-1] ++;
+      Counts(DstNId)(SrcNId) = Counts(DstNId).GetDatWithDefault(SrcNId, TIntV(KSize - 2));
       Counts(DstNId)(SrcNId)[level-1] ++;
     }
   }
   for (TUNGraph::TNodeI NI = G->BegNI(); NI < G->EndNI(); NI ++ ) {
     int NodeId = NI.GetId();
-    if (!Computed[NodeId]) {
-      Dependants(PrevNodes[0])(NodeId) = true;
-    } 
-
     int degHere = NI.GetOutDeg();
     for (int i = 0; i < level; i ++) {
+      Counts(PrevNodes[i])(NodeId) = Counts(PrevNodes[i]).GetDatWithDefault(NodeId, TIntV(KSize - 2));
       Counts(PrevNodes[i])(NodeId)[level-1] += degHere;
+      Counts(NodeId)(PrevNodes[i]) = Counts(NodeId).GetDatWithDefault(PrevNodes[i], TIntV(KSize - 2));
       Counts(NodeId)(PrevNodes[i])[level-1] += degHere;
     }
 
@@ -201,6 +205,10 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     TIntV neighborsID;
     for (int e = 0; e < NI.GetOutDeg(); e++) {
       int nbrID = NI.GetOutNId(e);
+      if (!Computed[nbrID]) {
+        Counts(PrevNodes[0])(NodeId) = Counts(PrevNodes[0]).GetDatWithDefault(NodeId, TIntV(KSize - 2));
+        Dependants(PrevNodes[0])(nbrID) = true;
+      } 
       if (higherDeg(G, NodeId, nbrID)) {
           neighborsID.Add(nbrID);
       }
@@ -217,26 +225,61 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
   }
 }
 
+
+// Functions for undirected graph that
+//  1) counts motifs on each edge of the given nodes
+//  2) assign weights acoordingly
+void ProcessedGraph::assignWeights_undir(int nodeID) {
+  TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
+  int KSize = getCliqueSize(mt);
+  if (KSize == 2) {
+    // Don't need to count, assign weights directly!
+    for (int e = 0; e < NI.GetOutDeg(); e++) {
+      Weights(nodeID)(NI.GetOutNId(e)) = 1;
+    }
+    Weights(nodeID)(nodeID) = NI.GetOutDeg();
+    TotalVolLB += NI.GetOutDeg();
+  } else { 
+    // KSize > 2
+    TIntV PrevNodes(KSize - 2);
+    countClique(Graph_org, nodeID, KSize, PrevNodes);
+    while (Dependants(nodeID).BegI() < Dependants(nodeID).EndI()) {
+      int key = Dependants(nodeID).BegI().GetKey();
+      countClique(Graph_org, key, KSize, PrevNodes);
+      Dependants(nodeID).DelKey(key);
+    }
+    Dependants.DelKey(nodeID);
+
+    // Now we assign weights!
+    float deg_w = 0;
+    for (int e = 0; e < NI.GetOutDeg(); e++) {
+      int NbrId = NI.GetOutNId(e);
+      int MtfCntHere = Counts(nodeID)(NbrId)[KSize-3];
+      if (MtfCntHere) {
+        Weights(nodeID)(NbrId) = MtfCntHere;
+        deg_w += MtfCntHere;
+      } else {
+        Graph_trans->DelEdge(nodeID, NbrId);
+      }
+    }
+    Weights(nodeID)(nodeID) = deg_w;
+    TotalVolLB += deg_w;
+  }
+}
+
 // Functions for undirected graph that
 //  1) counts motifs on each pair of nodes
 //  2) assign weights
 //  3) obtain the transformed graph
-void ProcessedGraph::assignWeights_undir(MotifType mt) {
+void ProcessedGraph::assignWeights_undir() {
   Weights = WeightVH(Graph_org->GetMxNId());
   Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
+  TotalVolLB = 0;
+  TotalVol = -1;
   int KSize = getCliqueSize(mt);
   if (KSize == 2) {
-    // Don't need to count, assign weights directly!
-    for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-      int NodeId = NI.GetId();
-      for (int e = 0; e < NI.GetOutDeg(); e++) {
-        Weights(NodeId)(NI.GetOutNId(e)) = 1;
-      }
-      Weights(NodeId)(NodeId) = NI.GetOutDeg();
-    }
     TotalVol = 2 * Graph_org->GetEdges();
   } else { 
-    // KSize > 2
     if (Counts.Len() == 0 || Counts.BegI()->Dat.Len() == 0 || Counts.BegI()->Dat.BegI()->Dat.Len() < KSize - 2) {
       // If the KSize-clique has not been counted yet, then we count.
       Counts = CountVH(Graph_org->GetMxNId());
@@ -245,43 +288,18 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
       Computed.PutAll(false);
       for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
         int NodeId = NI.GetId();
-        for (int e = 0; e < NI.GetOutDeg(); e++) {
-          Counts(NodeId)(NI.GetOutNId(e)) = TIntV(KSize - 2);
-        }
+        //FIXME consider initializing the counts on demand
+        // for (int e = 0; e < NI.GetOutDeg(); e++) {
+        //   Counts(NodeId)(NI.GetOutNId(e)) = TIntV(KSize - 2);
+        // }
       }
-      TIntV PrevNodes(KSize - 2);
-      for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-        int NIID = NI.GetId();
-        countClique(Graph_org, NIID, KSize, PrevNodes);
-        while (Dependants(NIID).BegI() < Dependants(NIID).EndI()) {
-          int key = Dependants(NIID).BegI().GetKey();
-          Dependants(NIID).DelKey(key);
-          countClique(Graph_org, key, KSize, PrevNodes);
-        }
-      }
-    }
-
-    // Now we assign weights!
-    TotalVol = 0;
-    for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-      int NodeId = NI.GetId();
-      float deg_w = 0;
-      for (int e = 0; e < NI.GetOutDeg(); e++) {
-        int NbrId = NI.GetOutNId(e);
-        int MtfCntHere = Counts(NodeId)(NbrId)[KSize-3];
-        if (MtfCntHere) {
-          Weights(NodeId)(NbrId) = MtfCntHere;
-          deg_w += MtfCntHere;
-        } else {
-          Graph_trans->DelEdge(NodeId, NbrId);
-        }
-      }
-      Weights(NodeId)(NodeId) = deg_w;
-      TotalVol += deg_w;
     }
   }
+  for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
+    assignWeights_undir(NI.GetId());
+  }
+  TotalVol = TotalVolLB;
 }
-
 
 
 // Initializing for directed graph input.
