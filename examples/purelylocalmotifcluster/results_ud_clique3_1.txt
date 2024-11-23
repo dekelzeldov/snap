@@ -6,6 +6,7 @@ Motif type (-m:)=clique3
 Seed (-s:)=1
 alpha (-a:)=0.98
 eps (-e:)=0.0001
+Total volume = 3834.00. 
 Size	NodeId	Conductance
 1	1	1.0000000
 2	115	0.9000000
@@ -130,5 +131,7 @@ Size	NodeId	Conductance
 119	59	1.0000000
 120	119	1.0000000
 Size of Cluster: 8.
+1 115 44 42 12 83 36 5 
+wheights computed: 131/131
 
 run time: 0.01s (13:40:59)
