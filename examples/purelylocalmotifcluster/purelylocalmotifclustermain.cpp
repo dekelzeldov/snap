@@ -61,10 +61,16 @@ int main(int argc, char* argv[]) {
 
 
   MAPPR mappr;
+  graph_p.printTotalVolume();
   mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
   mappr.sweepAPPR(-1);
   mappr.printProfile();
   printf("Size of Cluster: %d.\n", mappr.getCluster().Len());
+  for (int i = 0; i < mappr.getCluster().Len(); i++) {
+    printf("%d ", int(mappr.getCluster()[i]));
+  }
+  printf("\n");
+  printf("wheights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
 
 
 

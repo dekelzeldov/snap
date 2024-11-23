@@ -105,9 +105,6 @@ int getCliqueSize(const MotifType& type) {
 
 
 
-
-
-
 /*
 Section: Preprocessing unweighted graphs, including:
 1. counting motif on each edge
@@ -118,7 +115,10 @@ Section: Preprocessing unweighted graphs, including:
 ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   Graph_org = graph;
   this->mt = mt;
-  assignWeights_undir();
+  Directed = false;
+  numNodes = Graph_org->GetNodes();
+  prepWeights_undir();
+  estimateTotalVolume();
 }
 
 
@@ -155,7 +155,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int nodeID, int KSize, TIntV& Prev
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int nbrID = NI.GetOutNId(e);
     if (!Computed[nbrID]) {
-      Dependants(nodeID)(nbrID) = true;
+      Dependants(nodeID).AddKey(nbrID);
     } 
     if (higherDeg(G, nodeID, nbrID)) {
         neighborsID.Add(nbrID);
@@ -207,7 +207,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
       int nbrID = NI.GetOutNId(e);
       if (!Computed[nbrID]) {
         Counts(PrevNodes[0])(NodeId) = Counts(PrevNodes[0]).GetDatWithDefault(NodeId, TIntV(KSize - 2));
-        Dependants(PrevNodes[0])(nbrID) = true;
+        Dependants(PrevNodes[0]).AddKey(nbrID);
       } 
       if (higherDeg(G, NodeId, nbrID)) {
           neighborsID.Add(nbrID);
@@ -231,6 +231,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
 //  2) assign weights acoordingly
 void ProcessedGraph::assignWeights_undir(int nodeID) {
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
+  Weights(nodeID) = NodeWeightVH(NI.GetOutDeg());
   int KSize = getCliqueSize(mt);
   if (KSize == 2) {
     // Don't need to count, assign weights directly!
@@ -271,7 +272,7 @@ void ProcessedGraph::assignWeights_undir(int nodeID) {
 //  1) counts motifs on each pair of nodes
 //  2) assign weights
 //  3) obtain the transformed graph
-void ProcessedGraph::assignWeights_undir() {
+void ProcessedGraph::prepWeights_undir() {
   Weights = WeightVH(Graph_org->GetMxNId());
   Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
   TotalVolLB = 0;
@@ -295,18 +296,17 @@ void ProcessedGraph::assignWeights_undir() {
       }
     }
   }
-  for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-    assignWeights_undir(NI.GetId());
-  }
-  TotalVol = TotalVolLB;
 }
 
 
 // Initializing for directed graph input.
 ProcessedGraph::ProcessedGraph(PNGraph graph, MotifType mt){
   Graph_org = TSnap::ConvertGraph<PUNGraph>(graph);
+  this->mt = mt;
+  Directed = true;
+  numNodes = Graph_org->GetNodes();
   countDirTriadMotif(graph);
-  assignWeights_dir(mt);
+  assignWeights_dir();
 }
  
 // Check the edge information between nodeID and nbrID;
@@ -513,7 +513,7 @@ void ProcessedGraph::countDirTriadMotif(PNGraph graph) {
 //  1) counts motifs on each pair of nodes
 //  2) assign weights
 //  3) obtain the transformed graph
-void ProcessedGraph::assignWeights_dir(MotifType mt) {
+void ProcessedGraph::assignWeights_dir() {
   TIntV MtfInclude;
   switch (mt) {
     case UniDE :      {MtfInclude.Add(0); break;}
@@ -573,7 +573,7 @@ void ProcessedGraph::assignWeights_dir(MotifType mt) {
         WeightHere += CountHere[MtfInclude[i]];
       }
       if (WeightHere) {
-        Weights(NodeId)(NbrId) = WeightHere;
+        Weights(NodeId)(NbrId) = WeightHere; 
         deg_w += WeightHere;
       } else {
         Graph_trans->DelEdge(NodeId, NbrId);
@@ -586,6 +586,33 @@ void ProcessedGraph::assignWeights_dir(MotifType mt) {
   return;
 }
 
+NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
+	if (!Weights.IsKey(nodeID)) { 
+    assignWeights(nodeID);
+  }
+  return Weights.GetDat(nodeID);
+}
+
+void ProcessedGraph::estimateTotalVolume() {
+	int sample_size = 550; // FIXME
+	if (numNodes < sample_size)
+	{
+		for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI++)
+		{
+			assignWeights(NI.GetId());
+		}
+		TotalVol = TotalVolLB;
+	} else {
+    int sampleVol = 0;
+    float factore = numNodes/sample_size;
+    for (int i=0; i<sample_size; i++) {
+      int n = int(i*factore);
+      assignWeights(n);
+      sampleVol += getNodeWeights(n).GetDat(n);
+    }
+    TotalVolEst = sampleVol * factore;
+  }
+}
 
 void ProcessedGraph::printCounts() {  
   for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
@@ -611,7 +638,7 @@ void ProcessedGraph::printWeights() {
       printf("(%d, %d): ", NodeId, NbrId);
       if (Weights(NodeId).IsKey(NbrId)) {
         float weight = Weights(NodeId)(NbrId);
-        printf("%.2f ", weight);
+        printf("%.2f ", NbrId, weight);
       } else {
         printf("Not a key in Weights");
       }
@@ -624,6 +651,74 @@ void ProcessedGraph::printWeights() {
   Graph_trans->Dump();
 }
 
+void ProcessedGraph::printWeights(int NodeId) {  
+    TUNGraph::TNodeI NI = Graph_org->GetNI(NodeId);
+    for (int e = 0; e < NI.GetOutDeg(); e++) {
+      int NbrId = NI.GetOutNId(e);
+      printf("(%d, %d): ", NodeId, NbrId);
+      if (Weights(NodeId).IsKey(NbrId)) {
+        float weight = Weights(NodeId)(NbrId);
+        printf("%.2f ", NbrId, weight);
+      } else {
+        printf("Not a key in Weights");
+      }
+      printf("\n");
+    }
+    float d_w = Weights(NodeId)(NodeId);
+    printf("\td_w(%d) = %.2f.\n", NodeId, d_w);
+}
+
+bool ProcessedGraph::totalVolume_lte(float value) {
+  if (TotalVol != -1) {
+    return (TotalVol <= value);
+  }
+  if (TotalVolLB > value) {
+    return false;
+  }
+  int numNodes = Graph_org->GetMxNId();
+  while (TotalVolLB <= value and TotalVol != -1) {
+    while (Dependants.BegI() < Dependants.EndI()) {
+      TInt NIID = Dependants.BegI().GetKey();
+      while (Dependants(NIID).BegI() < Dependants(NIID).EndI()) {
+        if (TotalVolLB > value) {
+          return false;
+        }
+        int key = Dependants(NIID).BegI().GetKey();
+        assignWeights(NIID);
+        Dependants(NIID).DelKey(key);
+      }
+      Dependants.DelKey(NIID);
+      if (TotalVolLB > value) {
+        return false;
+      }
+    }
+    while (Weights.Len()<numNodes and ToCompute < numNodes and !Computed[ToCompute]) {
+      ToCompute ++;
+    }
+    if (ToCompute == numNodes) {
+      TotalVol = TotalVolLB;
+      return (TotalVol <= value);
+    }
+    assignWeights(ToCompute);
+    ToCompute ++;
+  }
+}
+
+void ProcessedGraph::printTotalVolume() const {
+  if (TotalVol != -1) {
+    printf("Total volume = %.2f. \n", TotalVol);
+  } else {
+    printf("Est. Total volume = %.2f. \n", TotalVolEst);
+  }
+}
+
+float ProcessedGraph::getTotalVolume() const {
+  if (TotalVol != -1) {
+    return TotalVol;
+  } else {
+    return TotalVolEst;
+  }
+}
 
 
 
@@ -644,13 +739,12 @@ MAPPR::MAPPR() {
 //    with seed {int SeedNodeId} alpha = {float alpha}, and epsilon = {float eps}.
 // It will also compute the NCP as well as with {SizeGlobalMin} and {SizeFirstLocalMin}, using {computeProfile(*)}.
 // Results are stored in {this->appr_vec}, {this->NodeInOrder, MtfCondProfile}, and {this->SizeGlobalMin, SizeFirstLocalMin}.
-void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, float alpha, float eps) {
+void MAPPR::computeAPPR(ProcessedGraph& graph_p, const int SeedNodeId, float alpha, float eps) {
   appr_vec.Clr();
-  THash<TInt, TFlt> residual;
+  NodeWeightVH residual;
   NumPushs = 0;
   appr_norm = 0;
-  const WeightVH& Weights = graph_p.getWeights();
-  if (Weights.GetDat(SeedNodeId).GetDat(SeedNodeId) * eps >= 1) {
+  if (graph_p.getNodeWeights(SeedNodeId).GetDat(SeedNodeId) * eps >= 1) {
     appr_vec(SeedNodeId) = 0;
     return;
   }
@@ -663,7 +757,7 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
     int NodeId = NodesWExcesRes.Top();
     NodesWExcesRes.Pop();
 
-    float deg_w = Weights.GetDat(NodeId).GetDat(NodeId);
+    float deg_w = graph_p.getNodeWeights(NodeId).GetDat(NodeId);
     if (deg_w == 0) {
       appr_vec(NodeId) += residual(NodeId);
       appr_norm += residual(NodeId);
@@ -674,15 +768,15 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
     appr_vec(NodeId) += pushVal * (1-alpha);
     appr_norm += pushVal * (1-alpha);
     residual(NodeId) = deg_w * eps / 2;
-
+ 
     pushVal *= alpha / deg_w;
     TUNGraph::TNodeI NI = graph_p.getTransformedGraph()->GetNI(NodeId);
     for (int i = 0; i < NI.GetOutDeg(); i ++) {
       int NbrId = NI.GetOutNId(i);
       float nbrValOld = residual(NbrId);
-      float nbrValNew = nbrValOld + pushVal * Weights.GetDat(NodeId).GetDat(NbrId);
+      float nbrValNew = nbrValOld + pushVal * graph_p.getNodeWeights(NodeId).GetDat(NbrId);
       residual(NbrId) = nbrValNew;
-      if (nbrValOld <= eps * Weights.GetDat(NbrId).GetDat(NbrId)  &&  nbrValNew > eps * Weights.GetDat(NbrId).GetDat(NbrId)) {
+      if (nbrValOld <= eps * graph_p.getNodeWeights(NbrId).GetDat(NbrId)  &&  nbrValNew > eps * graph_p.getNodeWeights(NbrId).GetDat(NbrId)) {
         NodesWExcesRes.Push(NbrId);
       }
     }
@@ -693,30 +787,28 @@ void MAPPR::computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, flo
 // To compute the NCP of the graph with precomputed APPR vector
 // Results are stored in {this->NodeInOrder and MtfCondProfile}.
 // It will also compute the global min and first local min of the NCP.
-void MAPPR::computeProfile(const ProcessedGraph& graph_p) {
-  THash<TInt, TFlt> Quotient;
-  const WeightVH& Weights = graph_p.getWeights();
-  for (THash<TInt, TFlt>::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
+void MAPPR::computeProfile(ProcessedGraph& graph_p) {
+  NodeWeightVH Quotient;
+  for (NodeWeightVH::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
     int NodeId = it->Key;
-    Quotient(NodeId) = it->Dat / Weights.GetDat(NodeId).GetDat(NodeId);
+    Quotient(NodeId) = it->Dat / graph_p.getNodeWeights(NodeId).GetDat(NodeId);
   }
   Quotient.SortByDat(false);
 
   double vol = 0, cut = 0;
   TIntSet IsIn;           // the current set
   int VolSmall = 1;       // =1 if volume(IsIn) <= VolAll/2, and = -1 otherwise;
-  float TotalVol = graph_p.getTotalVolume();
 
-  for (THash<TInt, TFlt>::TIter it = Quotient.BegI(); it < Quotient.EndI(); it++) {
+  for (NodeWeightVH::TIter it = Quotient.BegI(); it < Quotient.EndI(); it++) {
     int NodeId = it->Key;
     TUNGraph::TNodeI NI = graph_p.getTransformedGraph()->GetNI(NodeId);
-    const THash<TInt, TFlt>& WeightsHere = Weights.GetDat(NodeId);
+    const NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
 
     NodeInOrder.Add(NodeId);
     IsIn.AddKey(NodeId);
     vol += VolSmall * WeightsHere.GetDat(NodeId);
-    if (VolSmall == 1 && vol >= TotalVol / 2) {
-      vol = TotalVol - vol;
+    if (VolSmall == 1 && graph_p.totalVolume_lte(vol*2)) {
+      vol = graph_p.getTotalVolume() - vol;
       VolSmall = -1;
     }
     cut += WeightsHere.GetDat(NodeId);
@@ -814,7 +906,7 @@ void MAPPR::sweepAPPR(int option) {
 
 
 void MAPPR::printAPPR() {
-  for (THash<TInt, TFlt>::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
+  for (NodeWeightVH::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
     int NodeId = it->Key;
     float VecVal = it->Dat;
     printf("%d : %.7f\n", NodeId, VecVal);

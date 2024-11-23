@@ -3,9 +3,10 @@
 
 #include "Snap.h"
 
-typedef THash<TInt, THash<TInt, TFlt> > WeightVH;
+typedef THash<TInt, TFlt> NodeWeightVH;
+typedef THash<TInt, NodeWeightVH > WeightVH;
 typedef THash<TInt, THash<TInt, TIntV> > CountVH;
-typedef THash<TInt, THash<TInt, bool> > DependVH;
+typedef THash<TInt, THashSet<TInt> > DependVH;
 
 
 /*
@@ -78,13 +79,16 @@ class ProcessedGraph {
   
   TVec<bool> Computed;  // To check whether the motif counts have been computed for each edge.
                         // Computed[u] is true if the motif counts for node u and all its out going edges have been computed.
+  int ToCompute = 0;    // The next node to try compute if out of dependency
 
   DependVH Dependants;  // So the dependants of each node, i.e., the nodes that are needed to be computed to complet the computation of the node.
-                        // Dependants[u](v) is true if the motif counts for node u depends on compliting the computaion of node v, 
+                        // Dependants[u] contains v if the motif counts for node u depends on compliting the computaion of node v, 
                         //    and node v hasn't been yet computed at the time that u was computed.
 
   MotifType mt;         // The motif type that we are to count on the graph
+  bool Directed;        // Whether the input graph is directed or not
   float TotalVolLB;     // Lower bouond for the total volume of the whole graph, needed in computing the conductance, based on the computed motif counts
+  float TotalVolEst;    // Estimate for the total volume of the whole graph, needed in computing epsilon for the APPR
   float TotalVol;       // The total volume of the whole graph, needed in computing the conductance
 
 
@@ -103,6 +107,7 @@ class ProcessedGraph {
 
 
  public :
+  int numNodes;         // Number of nodes in the graph
   // Initialing, which will run assignWeights* functions and obtain the weighted transformed graph.
   ProcessedGraph() {}
   // For undirected input graph.
@@ -114,20 +119,25 @@ class ProcessedGraph {
   //  1) counts motifs on each pair of nodes
   //  2) assign weights
   //  3) obtain the transformed graph
-  void assignWeights_undir();
+  void prepWeights_undir();
   void assignWeights_undir(int nodeID);
-  void assignWeights_dir(MotifType mt);
-
+  void assignWeights_dir(); // FIXME to prep
+  void assignWeights_dir(int nodeID) {}; // FIXME implement
+  void assignWeights(int nodeID) { Directed ? assignWeights_dir(nodeID) : assignWeights_undir(nodeID); };
+  NodeWeightVH& getNodeWeights(int nodeID);
   // Output and printing
   PUNGraph getOriginalGraph() const {return Graph_org; };
   PUNGraph getTransformedGraph() const {return Graph_trans; };
   CountVH getCounts() const { return Counts; };
   const WeightVH& getWeights() const { return Weights; };
-  // float totalVolume_lte(float value) const;
-  // float getTotalVolume() const;
-  float getTotalVolume() const { return TotalVol; };
+  
+  void estimateTotalVolume();
+  bool totalVolume_lte(float value);
+  void printTotalVolume() const;
+  float getTotalVolume() const;
   void printCounts();
   void printWeights();
+  void printWeights(int NodeId);
 };
 
 
@@ -161,7 +171,7 @@ class MAPPR {
   // To compute the NCP of the graph with precomputed APPR vector
   // Results are stored in {this->NodeInOrder and MtfCondProfile}.
   // It will also compute the global min and first local min of the NCP.
-  void computeProfile(const ProcessedGraph& graph_p);
+  void computeProfile(ProcessedGraph& graph_p);
 
   // To compute the size the global minimum in NCP
   void findGlobalMin();
@@ -181,7 +191,7 @@ class MAPPR {
   //    with seed {int SeedNodeId} alpha = {float alpha}, and epsilon = {float eps}.
   // It will also compute the NCP as well as with {SizeGlobalMin} and {SizeFirstLocalMin}, using {computeProfile(*)}.
   // Results are stored in {this->appr_vec}, {this->NodeInOrder, MtfCondProfile}, and {this->SizeGlobalMin, SizeFirstLocalMin}.
-  void computeAPPR(const ProcessedGraph& graph_p, const int SeedNodeId, float alpha, float eps);
+  void computeAPPR(ProcessedGraph& graph_p, const int SeedNodeId, float alpha, float eps);
 
   // Function to find the desired cluster based on the NCP.
   // Option > 0 will give the cluster of size option;
