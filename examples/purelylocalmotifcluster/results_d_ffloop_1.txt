@@ -6,6 +6,7 @@ Motif type (-m:)=FFLoop
 Seed (-s:)=1
 alpha (-a:)=0.98
 eps (-e:)=0.0001
+Total volume = 4356.00. 
 Size	NodeId	Conductance
 1	1	1.0000000
 2	115	0.8974359
@@ -126,5 +127,7 @@ Size	NodeId	Conductance
 115	53	1.0000000
 116	119	1.0000000
 Size of Cluster: 7.
+1 115 44 42 12 83 36 
+wheights computed: 131/131
 
 run time: 0.01s (13:41:11)
