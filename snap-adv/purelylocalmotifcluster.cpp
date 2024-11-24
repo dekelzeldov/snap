@@ -141,27 +141,43 @@ bool higherDeg(PUNGraph& G, int nodeID1, int nodeID2) {
 }
 
 // This function counts the undirected graph motif (clique) instances on each edge of a node.
-void ProcessedGraph::countClique(PUNGraph& G, int nodeID, int KSize, TIntV& PrevNodes) {
+void ProcessedGraph::countClique(int nodeID, int KSize, TIntV& PrevNodes) {
   // Each edge means a (level+2)-clique in the original graph!
   if (Computed[nodeID]) {
     return;
   }
-  TUNGraph::TNodeI NI = G->GetNI(nodeID);
+
+  TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
   int degHere = NI.GetOutDeg();
+
+  if (!Counts.IsKey(nodeID)) {
+    for (int e = 0; e < degHere; e++) {
+      int nbrID = NI.GetOutNId(e);
+      Counts(nodeID)(nbrID) = TIntV(KSize - 2);
+    }
+  }
 
   // Go to the next level
   PrevNodes[0] = nodeID;
   TIntV neighborsID;
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int nbrID = NI.GetOutNId(e);
+    if (!Counts.IsKey(nbrID)) {
+      TUNGraph::TNodeI nbrNI = Graph_org->GetNI(nbrID);
+      int nbrDeg = nbrNI.GetOutDeg();
+      for (int e = 0; e < nbrDeg; e++) {
+        int nbrnbrID = nbrNI.GetOutNId(e);
+        Counts(nbrID)(nbrnbrID) = TIntV(KSize - 2);
+      }
+    }
     if (!Computed[nbrID]) {
       Dependants(nodeID).AddKey(nbrID);
     } 
-    if (higherDeg(G, nodeID, nbrID)) {
+    if (higherDeg(Graph_org, nodeID, nbrID)) {
         neighborsID.Add(nbrID);
     }
   }
-  PUNGraph subGraph = TSnap::GetSubGraph(G, neighborsID);
+  PUNGraph subGraph = TSnap::GetSubGraph(Graph_org, neighborsID);
   countClique(subGraph, KSize, PrevNodes, 1);
   Computed[nodeID] = true;
 }
@@ -181,9 +197,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     for (TUNGraph::TEdgeI EI = G->BegEI(); EI < G->EndEI(); EI ++ ) {
       int SrcNId = EI.GetSrcNId();
       int DstNId = EI.GetDstNId();
-      Counts(SrcNId)(DstNId) = Counts(SrcNId).GetDatWithDefault(DstNId, TIntV(KSize - 2));
       Counts(SrcNId)(DstNId)[level-1] ++;
-      Counts(DstNId)(SrcNId) = Counts(DstNId).GetDatWithDefault(SrcNId, TIntV(KSize - 2));
       Counts(DstNId)(SrcNId)[level-1] ++;
     }
   }
@@ -191,9 +205,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     int NodeId = NI.GetId();
     int degHere = NI.GetOutDeg();
     for (int i = 0; i < level; i ++) {
-      Counts(PrevNodes[i])(NodeId) = Counts(PrevNodes[i]).GetDatWithDefault(NodeId, TIntV(KSize - 2));
       Counts(PrevNodes[i])(NodeId)[level-1] += degHere;
-      Counts(NodeId)(PrevNodes[i]) = Counts(NodeId).GetDatWithDefault(PrevNodes[i], TIntV(KSize - 2));
       Counts(NodeId)(PrevNodes[i])[level-1] += degHere;
     }
 
@@ -206,9 +218,16 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
     for (int e = 0; e < NI.GetOutDeg(); e++) {
       int nbrID = NI.GetOutNId(e);
       if (!Computed[nbrID]) {
-        Counts(PrevNodes[0])(NodeId) = Counts(PrevNodes[0]).GetDatWithDefault(NodeId, TIntV(KSize - 2));
         Dependants(PrevNodes[0]).AddKey(nbrID);
-      } 
+      }
+      if (!Counts.IsKey(nbrID)) {
+        TUNGraph::TNodeI nbrNI = G->GetNI(nbrID);
+        int nbrDeg = nbrNI.GetOutDeg();
+        for (int e = 0; e < nbrDeg; e++) {
+          int nbrnbrID = nbrNI.GetOutNId(e);
+          Counts(nbrID)(nbrnbrID) = TIntV(KSize - 2);
+        }
+      }
       if (higherDeg(G, NodeId, nbrID)) {
           neighborsID.Add(nbrID);
       }
@@ -243,10 +262,10 @@ void ProcessedGraph::assignWeights_undir(int nodeID) {
   } else { 
     // KSize > 2
     TIntV PrevNodes(KSize - 2);
-    countClique(Graph_org, nodeID, KSize, PrevNodes);
+    countClique(nodeID, KSize, PrevNodes);
     while (Dependants(nodeID).BegI() < Dependants(nodeID).EndI()) {
       int key = Dependants(nodeID).BegI().GetKey();
-      countClique(Graph_org, key, KSize, PrevNodes);
+      countClique(key, KSize, PrevNodes);
       Dependants(nodeID).DelKey(key);
     }
     Dependants.DelKey(nodeID);
@@ -287,13 +306,6 @@ void ProcessedGraph::prepWeights_undir() {
       Dependants = DependVH(Graph_org->GetMxNId());
       Computed = TVec<bool>(Graph_org->GetMxNId());
       Computed.PutAll(false);
-      for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-        int NodeId = NI.GetId();
-        //FIXME consider initializing the counts on demand
-        // for (int e = 0; e < NI.GetOutDeg(); e++) {
-        //   Counts(NodeId)(NI.GetOutNId(e)) = TIntV(KSize - 2);
-        // }
-      }
     }
   }
 }
@@ -301,12 +313,13 @@ void ProcessedGraph::prepWeights_undir() {
 
 // Initializing for directed graph input.
 ProcessedGraph::ProcessedGraph(PNGraph graph, MotifType mt){
+  Graph_org_dir = graph;
   Graph_org = TSnap::ConvertGraph<PUNGraph>(graph);
   this->mt = mt;
   Directed = true;
   numNodes = Graph_org->GetNodes();
-  countDirTriadMotif(graph);
-  assignWeights_dir();
+  prepWeights_dir();
+  estimateTotalVolume();
 }
  
 // Check the edge information between nodeID and nbrID;
@@ -435,86 +448,8 @@ int checkTriadMotif(PNGraph& G, long nodeID, long srcNId, long dstNId) {
   return motifType;
 }
 
-// This function will return true if the out-degree of nodeID1 is higher than nodeID2.
-// If the degrees equal, it will return true if nodeID1 > nodeID2.
-// Used in ChibaNishizeki's clique enumeration method
-bool higherDeg(PNGraph& G, TNGraph::TNodeI& NI1, int nodeID2) {
-  TNGraph::TNodeI NI2 = G->GetNI(nodeID2);
-  if (NI1.GetOutDeg() > NI2.GetOutDeg()) {
-    return true;
-  } else if (NI1.GetOutDeg() == NI2.GetOutDeg() && NI1.GetId() > nodeID2) {
-    return true;
-  } else {
-    return false;
-  }
-}
-bool higherDeg(PNGraph& G, int nodeID1, int nodeID2) {
-  TNGraph::TNodeI NI1 = G->GetNI(nodeID1);
-  return higherDeg(G, NI1, nodeID2);
-}
 
-// To count the directed triangle motifs
-void ProcessedGraph::countDirTriadMotif(PNGraph graph) {
-  int numBasicDirMtf = 9;
-  Counts = CountVH(Graph_org->GetMxNId());
-  for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-    int NodeId = NI.GetId();
-    for (int e = 0; e < NI.GetOutDeg(); e++) {
-      Counts(NodeId)(NI.GetOutNId(e)) = TIntV(numBasicDirMtf);
-    }
-  }
-  for (TNGraph::TNodeI NI = graph->BegNI(); NI < graph->EndNI(); NI ++ ) {
-    long nodeID = NI.GetId();
-    TIntV neighborsID;
-    for (long e = 0; e < NI.GetOutDeg(); e++) {
-      long nbrID = NI.GetOutNId(e);
-      if (higherDeg(graph, nodeID, nbrID)) {
-        neighborsID.Add(nbrID);
-        Counts(nodeID)(nbrID)[0] ++;
-        Counts(nbrID)(nodeID)[0] ++;
-      }
-    }
-    for (long e = 0; e < NI.GetInDeg(); e++) {
-      long nbrID = NI.GetInNId(e);
-      if (higherDeg(graph, nodeID, nbrID)) {
-        if (graph->IsEdge(nodeID, nbrID)) {
-          Counts(nodeID)(nbrID)[0] --;
-          Counts(nbrID)(nodeID)[0] --;
-          Counts(nodeID)(nbrID)[1] ++;
-          Counts(nbrID)(nodeID)[1] ++;
-        } else {
-          neighborsID.Add(nbrID);
-          Counts(nodeID)(nbrID)[0] ++;
-          Counts(nbrID)(nodeID)[0] ++;
-        }
-      }
-    }
-    PNGraph subGraph = TSnap::GetSubGraph(graph, neighborsID);
-    for (TNGraph::TEdgeI EI = subGraph->BegEI(); EI < subGraph->EndEI(); EI ++ ) { 
-      long srcNId = EI.GetSrcNId();
-      long dstNId = EI.GetDstNId();
-      int MotifNumber = 0;
-      if (srcNId > dstNId || !subGraph->IsEdge(dstNId, srcNId)) {
-        MotifNumber = checkTriadMotif(graph, nodeID, srcNId, dstNId);
-        MotifNumber ++;
-        Counts(nodeID)(srcNId)[MotifNumber] ++;
-        Counts(srcNId)(nodeID)[MotifNumber] ++;
-        Counts(nodeID)(dstNId)[MotifNumber] ++;
-        Counts(dstNId)(nodeID)[MotifNumber] ++;
-        Counts(srcNId)(dstNId)[MotifNumber] ++;
-        Counts(dstNId)(srcNId)[MotifNumber] ++;
-      }
-    }
-  }
-  return;
-}
-
-// Functions for directed graph that
-//  1) counts motifs on each pair of nodes
-//  2) assign weights
-//  3) obtain the transformed graph
-void ProcessedGraph::assignWeights_dir() {
-  TIntV MtfInclude;
+void ProcessedGraph::setMtfInclude() {
   switch (mt) {
     case UniDE :      {MtfInclude.Add(0); break;}
     case BiDE :       MtfInclude.Add(1); break;
@@ -557,33 +492,151 @@ void ProcessedGraph::assignWeights_dir() {
       TExcept::Throw("Unknown motif type!");
     }    
   }
+}
 
-  Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
-  Weights = WeightVH(Graph_org->GetMxNId());
 
-  TotalVol = 0;
-  for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
-    int NodeId = NI.GetId();
-    float deg_w = 0;
-    for (int e = 0; e < NI.GetOutDeg(); e++) {
-      int NbrId = NI.GetOutNId(e);
-      TIntV& CountHere = Counts(NodeId)(NbrId);
-      int WeightHere = 0;
-      for (int i = 0; i < MtfInclude.Len(); i ++) {
-        WeightHere += CountHere[MtfInclude[i]];
-      }
-      if (WeightHere) {
-        Weights(NodeId)(NbrId) = WeightHere; 
-        deg_w += WeightHere;
-      } else {
-        Graph_trans->DelEdge(NodeId, NbrId);
-      }
-    }
-    Weights(NodeId)(NodeId) = deg_w;
-    TotalVol += deg_w;
+// This function will return true if the out-degree of nodeID1 is higher than nodeID2.
+// If the degrees equal, it will return true if nodeID1 > nodeID2.
+// Used in ChibaNishizeki's clique enumeration method
+bool higherDeg(PNGraph& G, TNGraph::TNodeI& NI1, int nodeID2) {
+  TNGraph::TNodeI NI2 = G->GetNI(nodeID2);
+  if (NI1.GetOutDeg() > NI2.GetOutDeg()) {
+    return true;
+  } else if (NI1.GetOutDeg() == NI2.GetOutDeg() && NI1.GetId() > nodeID2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+bool higherDeg(PNGraph& G, int nodeID1, int nodeID2) {
+  TNGraph::TNodeI NI1 = G->GetNI(nodeID1);
+  return higherDeg(G, NI1, nodeID2);
+}
+
+// To count the directed triangle motifs of a node
+void ProcessedGraph::countDirTriadMotif(int nodeID) {
+  int numBasicDirMtf = 9;  
+
+  if (Computed[nodeID]) {
+    return;
   }
 
-  return;
+  TIntV neighborsID;
+  TNGraph::TNodeI NI = Graph_org_dir->GetNI(nodeID);
+
+  if (!Counts.IsKey(nodeID)) {
+    for (int e = 0; e < NI.GetDeg(); e++) {
+      int nbrID = NI.GetNbrNId(e);
+      Counts(nodeID)(nbrID) = TIntV(numBasicDirMtf);
+    }
+  }
+
+  for (int e = 0; e < NI.GetOutDeg(); e++) {
+    int nbrID = NI.GetOutNId(e);
+    if (!Computed[nbrID]) {
+      Dependants(nodeID).AddKey(nbrID);
+    }
+    if (!Counts.IsKey(nbrID)) {
+      TNGraph::TNodeI nbrNI = Graph_org_dir->GetNI(nbrID);
+      for (int e = 0; e < nbrNI.GetDeg(); e++) {
+        int nbrnbrID = nbrNI.GetNbrNId(e);
+        Counts(nbrID)(nbrnbrID) = TIntV(numBasicDirMtf);
+      }
+    }
+    if (higherDeg(Graph_org_dir, nodeID, nbrID)) {
+      neighborsID.Add(nbrID);
+      Counts(nodeID)(nbrID)[0] ++;
+      Counts(nbrID)(nodeID)[0] ++;
+    }
+  }
+  for (int e = 0; e < NI.GetInDeg(); e++) {
+    int nbrID = NI.GetInNId(e);
+    if (!Computed[nbrID]) {
+      Dependants(nodeID).AddKey(nbrID);
+    }
+    if (!Counts.IsKey(nbrID)) {
+      TNGraph::TNodeI nbrNI = Graph_org_dir->GetNI(nbrID);
+      for (int e = 0; e < nbrNI.GetDeg(); e++) {
+        int nbrnbrID = nbrNI.GetNbrNId(e);
+        Counts(nbrID)(nbrnbrID) = TIntV(numBasicDirMtf);
+      }
+    }
+    if (higherDeg(Graph_org_dir, nodeID, nbrID)) {
+      if (Graph_org_dir->IsEdge(nodeID, nbrID)) {
+        Counts(nodeID)(nbrID)[0] --;
+        Counts(nbrID)(nodeID)[0] --;
+        Counts(nodeID)(nbrID)[1] ++;
+        Counts(nbrID)(nodeID)[1] ++;
+      } else {
+        neighborsID.Add(nbrID);
+        Counts(nodeID)(nbrID)[0] ++;
+        Counts(nbrID)(nodeID)[0] ++;
+      }
+    }
+  }
+  PNGraph subGraph = TSnap::GetSubGraph(Graph_org_dir, neighborsID);
+  for (TNGraph::TEdgeI EI = subGraph->BegEI(); EI < subGraph->EndEI(); EI ++ ) { 
+    int srcNId = EI.GetSrcNId();
+    int dstNId = EI.GetDstNId();
+    int MotifNumber = 0;
+    if (srcNId > dstNId || !subGraph->IsEdge(dstNId, srcNId)) {
+      MotifNumber = checkTriadMotif(Graph_org_dir, nodeID, srcNId, dstNId);
+      MotifNumber ++;
+      Counts(nodeID)(srcNId)[MotifNumber] ++;
+      Counts(srcNId)(nodeID)[MotifNumber] ++;
+      Counts(nodeID)(dstNId)[MotifNumber] ++;
+      Counts(dstNId)(nodeID)[MotifNumber] ++;
+      Counts(srcNId)(dstNId)[MotifNumber] ++;
+      Counts(dstNId)(srcNId)[MotifNumber] ++;
+    }
+  }
+  Computed[nodeID] = true;
+}
+
+
+// Functions for directed graph that
+//  1) counts motifs on each edge of a nodes
+//  2) assign weights
+//  3) obtain the transformed graph
+void ProcessedGraph::assignWeights_dir(int nodeID) {
+  countDirTriadMotif(nodeID);
+  while (Dependants(nodeID).BegI() < Dependants(nodeID).EndI()) {
+    int key = Dependants(nodeID).BegI().GetKey();
+    countDirTriadMotif(key);
+    Dependants(nodeID).DelKey(key);
+  }
+
+  TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
+  float deg_w = 0;
+  for (int e = 0; e < NI.GetOutDeg(); e++) {
+    int NbrId = NI.GetOutNId(e);
+    TIntV& CountHere = Counts(nodeID)(NbrId);
+    int WeightHere = 0;
+    for (int i = 0; i < MtfInclude.Len(); i ++) {
+      WeightHere += CountHere[MtfInclude[i]];
+    }
+    if (WeightHere) {
+      Weights(nodeID)(NbrId) = WeightHere; 
+      deg_w += WeightHere;
+    } else {
+      Graph_trans->DelEdge(nodeID, NbrId);
+    }
+  }
+  Weights(nodeID)(nodeID) = deg_w;
+  TotalVolLB += deg_w;
+}
+
+// Functions for directed graph to prepare the weights and the transformed graph
+void ProcessedGraph::prepWeights_dir() {
+  setMtfInclude();
+  Counts = CountVH(Graph_org->GetMxNId());
+  Dependants = DependVH(Graph_org->GetMxNId());
+  Computed = TVec<bool>(Graph_org->GetMxNId());
+  Computed.PutAll(false);
+  Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
+  Weights = WeightVH(Graph_org->GetMxNId());
+  TotalVolLB = 0;
+  TotalVol = -1;
 }
 
 NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
@@ -594,7 +647,7 @@ NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
 }
 
 void ProcessedGraph::estimateTotalVolume() {
-	int sample_size = 550; // FIXME
+	int sample_size = 55; // FIXME
 	if (numNodes < sample_size)
 	{
 		for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI++)
@@ -611,6 +664,20 @@ void ProcessedGraph::estimateTotalVolume() {
       sampleVol += getNodeWeights(n).GetDat(n);
     }
     TotalVolEst = sampleVol * factore;
+  }
+}
+
+void ProcessedGraph::printCounts(int NodeId) {  
+  TUNGraph::TNodeI NI = Graph_org->GetNI(NodeId);
+  for (int e = 0; e < NI.GetOutDeg(); e++) {
+    int NbrId = NI.GetOutNId(e);
+    TIntV& CountThisEdge = Counts(NodeId)(NbrId);
+    printf("(%d, %d): ", NodeId, NbrId);
+    for (int i = 0; i < CountThisEdge.Len(); i ++) {
+      int output = CountThisEdge[i];
+      printf("%d ", output);
+    }
+    printf("\n");
   }
 }
 

@@ -57,6 +57,8 @@ Section: Preprocessing graphs, including:
 */
 class ProcessedGraph {
  private :
+  PNGraph Graph_org_dir;   // A pointer to the original input graph if directed.
+
   PUNGraph Graph_org;   // A pointer to the original input graph.
                         // If the input is a directed graph, we will create its undirected version.
                         // This is used in forming the weighted graph.
@@ -86,6 +88,7 @@ class ProcessedGraph {
                         //    and node v hasn't been yet computed at the time that u was computed.
 
   MotifType mt;         // The motif type that we are to count on the graph
+  TIntV MtfInclude;     // The motif types that are included in the motif type {mt}
   bool Directed;        // Whether the input graph is directed or not
   float TotalVolLB;     // Lower bouond for the total volume of the whole graph, needed in computing the conductance, based on the computed motif counts
   float TotalVolEst;    // Estimate for the total volume of the whole graph, needed in computing epsilon for the APPR
@@ -98,12 +101,16 @@ class ProcessedGraph {
   // Input {TIntV& PrevNodes} denotes a set of nodes that are directed connected to any node in the current graph G
   //    and {int level = PrevNodes.Len()} is the number of PreNodes. Therefore, any k-clique in G corresponds to 
   //    a (k+level)-clique after all nodes in PrevNodes are added in the current graph G.
-  void countClique(PUNGraph& G, int nodeID, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
+  void countClique(int nodeID, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
   void countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int level);
+
+  // This function sets MtfInclude to the motif types that are included in the motif type {mt}
+  void setMtfInclude();
 
   // This function counts the directed graph motif instances on each edge.
   // void countDirEdgeMotif(PNGraph graph);
-  void countDirTriadMotif(PNGraph graph);
+  void countDirTriadMotif(int nodeID);
+  void countDirTriadMotif();
 
 
  public :
@@ -121,10 +128,11 @@ class ProcessedGraph {
   //  3) obtain the transformed graph
   void prepWeights_undir();
   void assignWeights_undir(int nodeID);
-  void assignWeights_dir(); // FIXME to prep
-  void assignWeights_dir(int nodeID) {}; // FIXME implement
+  void prepWeights_dir(); 
+  void assignWeights_dir(int nodeID); 
   void assignWeights(int nodeID) { Directed ? assignWeights_dir(nodeID) : assignWeights_undir(nodeID); };
   NodeWeightVH& getNodeWeights(int nodeID);
+  
   // Output and printing
   PUNGraph getOriginalGraph() const {return Graph_org; };
   PUNGraph getTransformedGraph() const {return Graph_trans; };
@@ -136,6 +144,7 @@ class ProcessedGraph {
   void printTotalVolume() const;
   float getTotalVolume() const;
   void printCounts();
+  void printCounts(int NodeId);
   void printWeights();
   void printWeights(int NodeId);
 };
