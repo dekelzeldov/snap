@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     printf("%d ", int(mappr.getCluster()[i]));
   }
   printf("\n");
-  printf("wheights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
+  printf("weights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
 
 
 
