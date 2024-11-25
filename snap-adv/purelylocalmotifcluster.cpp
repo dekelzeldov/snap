@@ -660,14 +660,14 @@ void ProcessedGraph::estimateTotalVolume() {
     int sampleVol = 0;
     float factore = numNodes/sample_size;
 
-    THashSet<int> elems;
+    THashSet<TInt> elems;
     int k = sample_size;
     if (factore > 0.5) {
       k = numNodes - k;
     }
 
     while (elems.Len() < k) {
-      int n = Graph_org->GetRndNId();
+      TInt n = Graph_org->GetRndNId();
       if (factore <= 0.5 and !elems.IsKey(n)) {
         assignWeights(n);
         sampleVol += Weights(n)(n);
