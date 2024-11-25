@@ -656,13 +656,38 @@ void ProcessedGraph::estimateTotalVolume() {
 		}
 		TotalVol = TotalVolLB;
 	} else {
+
     int sampleVol = 0;
     float factore = numNodes/sample_size;
-    for (int i=0; i<sample_size; i++) {
-      int n = int(i*factore);
-      assignWeights(n);
-      sampleVol += getNodeWeights(n).GetDat(n);
+
+    THashSet<int> elems;
+    int k = sample_size;
+    if (factore > 0.5) {
+      k = numNodes - k;
     }
+
+    while (elems.Len() < k) {
+      int n = Graph_org->GetRndNId();
+      if (factore <= 0.5 and !elems.IsKey(n)) {
+        assignWeights(n);
+        sampleVol += Weights(n)(n);
+      }
+      elems.AddKey(n);
+    }
+    
+    if (factore > 0.5) {
+      int i = 0;
+      for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI++)
+      {
+        if (!elems.IsKey(i)) {
+          int n = NI.GetId();
+          assignWeights(n);
+          sampleVol += Weights(n)(n);
+        }
+        i ++;
+      }
+    }
+
     TotalVolEst = sampleVol * factore;
   }
 }
