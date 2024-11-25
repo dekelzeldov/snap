@@ -49,7 +49,6 @@ MotifType ParseMotifType(const TStr& motif, const bool& IsDirected = false);
 
 
 
-
 /*
 Section: Preprocessing graphs, including:
 1. counting motif on each edge
@@ -94,7 +93,6 @@ class ProcessedGraph {
   float TotalVolEst;    // Estimate for the total volume of the whole graph, needed in computing epsilon for the APPR
   float TotalVol;       // The total volume of the whole graph, needed in computing the conductance
 
-
   // This function counts the undirected graph motif (clique) instances on each edge.
   // It uses recursive method for clique enumeration proposed by Chiba and Nishizeki (SIAM J. Comput. 1985).
   // Input {int KSize} denotes the size of the clique we are to enumerate in the current graph {PUNGraph& G}
@@ -110,11 +108,11 @@ class ProcessedGraph {
   // This function counts the directed graph motif instances on each edge.
   // void countDirEdgeMotif(PNGraph graph);
   void countDirTriadMotif(int nodeID);
-  void countDirTriadMotif();
 
 
  public :
   int numNodes;         // Number of nodes in the graph
+  
   // Initialing, which will run assignWeights* functions and obtain the weighted transformed graph.
   ProcessedGraph() {}
   // For undirected input graph.
