@@ -52,29 +52,32 @@ int main(int argc, char* argv[]) {
     graph_p = ProcessedGraph(graph, mt);
   }
 
-  const TInt seed =
-    Env.GetIfArgPrefixInt("-s:", 1, "Seed");
+
+  const TVec<TInt> seeds =
+    Env.GetIfArgPrefixIntV("-s:", "Seeds");
   const TFlt alpha =
     Env.GetIfArgPrefixFlt("-a:", 0.98, "alpha");
   const TFlt eps =
     Env.GetIfArgPrefixFlt("-e:", 0.0001, "eps");
 
-
-  MAPPR mappr;
-  graph_p.printTotalVolume();
-  mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
-  mappr.sweepAPPR(-1);
-  mappr.printProfile();
-  printf("Size of Cluster: %d.\n", mappr.getCluster().Len());
-  for (int i = 0; i < mappr.getCluster().Len(); i++) {
-    printf("%d ", int(mappr.getCluster()[i]));
+  printf("Number of seeds: %d\n", seeds.Len());
+  for (int i = 0; i < seeds.Len(); i++) {
+    int seed = seeds[i];
+    printf("\nSeed: %d \n", int(seed));
+    MAPPR mappr;
+    graph_p.printTotalVolume();
+    mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
+    mappr.sweepAPPR(-1);
+    // mappr.printProfile();
+    printf("Size of Cluster: %d.\n", mappr.getCluster().Len());
+    for (int i = 0; i < mappr.getCluster().Len(); i++) {
+      printf("%d ", int(mappr.getCluster()[i]));
+    }
+    printf("\n");
+    printf("weights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
   }
-  printf("\n");
-  printf("weights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
 
 
-
-  
   Catch
   printf("\nrun time: %s (%s)\n", ExeTm.GetTmStr(),
    TSecTm::GetCurTm().GetTmStr().CStr());
