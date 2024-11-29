@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
 
 
   Catch
-  printf("\nrun time: %s (%s)\n", ExeTm.GetTmStr(),
-   TSecTm::GetCurTm().GetTmStr().CStr());
+  printf("\nrun time: %s \n", ExeTm.GetTmStr());
   return 0;
 }
