@@ -70,9 +70,11 @@ int main(int argc, char* argv[]) {
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
     printf("Size of Cluster: %d.\n", mappr.getCluster().Len());
+    printf("Nodes of Cluster: ");
     for (int i = 0; i < mappr.getCluster().Len(); i++) {
       printf("%d ", int(mappr.getCluster()[i]));
     }
+    printf("\n");
     printf("\n");
     printf("weights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
   }
