@@ -4,6 +4,8 @@
 #include "purelylocalmotifcluster.h"
 
 int main(int argc, char* argv[]) {
+  printf("{\n");
+  printf("\"Run Info\": \"\n");
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs(TStr::Fmt("Purely Local motif clustering. build: %s, %s. Time: %s",
        __TIME__, __DATE__, TExeTm::GetCurTm()));  
@@ -60,27 +62,37 @@ int main(int argc, char* argv[]) {
   const TFlt eps =
     Env.GetIfArgPrefixFlt("-e:", 0.0001, "eps");
 
-  printf("Number of seeds: %d\n", seeds.Len());
+  printf("\"\n");
+  printf(",\n");
+
+  printf("\"Number of Seeds\": %d\n", seeds.Len());
+  printf(",\n");
   for (int i = 0; i < seeds.Len(); i++) {
     int seed = seeds[i];
-    printf("\nSeed: %d \n", int(seed));
+    printf("\"Seed\": %d \n", int(seed));
+    printf(",\n");
     MAPPR mappr;
     graph_p.printTotalVolume();
+    printf(",\n");
     mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
-    printf("Size of Cluster: %d.\n", mappr.getCluster().Len());
-    printf("Nodes of Cluster: ");
-    for (int i = 0; i < mappr.getCluster().Len(); i++) {
-      printf("%d ", int(mappr.getCluster()[i]));
+    printf("\"Size of Found Cluster\": %d.\n", mappr.getCluster().Len());
+    printf(",\n");
+    printf("\"Nodes of Cluster\": [");
+    printf("%d", int(mappr.getCluster()[0]));
+    for (int i = 1; i < mappr.getCluster().Len(); i++) {
+      printf(", %d", int(mappr.getCluster()[i]));
     }
-    printf("\n");
-    printf("\n");
-    printf("weights computed: %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
+    printf("]\n");
+    printf(",\n");
+    
+    printf("\"Weights Computed\": %d/%d\n", graph_p.getWeights().Len(), graph_p.numNodes);
+    printf(",\n");
   }
 
-
   Catch
-  printf("\nrun time: %s \n", ExeTm.GetTmStr());
+  printf("\"Run Time\": %s \n", ExeTm.GetTmStr());
+  printf("}\n");
   return 0;
 }

@@ -798,9 +798,9 @@ bool ProcessedGraph::totalVolume_lte(float value) {
 
 void ProcessedGraph::printTotalVolume() const {
   if (TotalVol != -1) {
-    printf("Total volume = %.2f. \n", TotalVol);
+    printf("\"Total volume\": %.2f. \n", TotalVol);
   } else {
-    printf("Est. Total volume = %.2f. \n", TotalVolEst);
+    printf("\"Est. Total volume\": %.2f. \n", TotalVolEst);
   }
 }
 

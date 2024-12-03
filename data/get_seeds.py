@@ -14,15 +14,14 @@ def get_k_longest_lists(lists, k):
 	return sorted(lists, key=len, reverse=True)[:k]
 
 # Example usage
-file_path = '/Users/dekel/Downloads/com-dblp.top5000.cmty.txt'
-lists = read_list_of_lists(file_path)
+def pick_seeds(file, k):
+	lists = read_list_of_lists(file)
 
-k = 10  # Change this to the number of longest lists you want
-longest_lists = get_k_longest_lists(lists, k)
+	longest_lists = get_k_longest_lists(lists, k)
 
-chosen_nodes = []
-for lst in longest_lists:
-	# Choose a random node from each list
-	chosen_nodes.append(random.choice(lst))
-	
-print(chosen_nodes)
+	chosen_nodes = []
+	for lst in longest_lists:
+		# Choose a random node from each list
+		chosen_nodes.append((random.choice(lst), len(lst)))
+		
+	return chosen_nodes
