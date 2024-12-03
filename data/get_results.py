@@ -25,8 +25,8 @@ def get_results(graph):
 
             if cluseters["Local"] != cluseters["Purely Local"]:
                 print("Clusters are NOT the same")
-                # print(f"\t Local-Purely: {cluseters['Local']-cluseters['Purely Local']}")
-                # print(f"\t Purely-Local: {cluseters['Purely Local']-cluseters['Local']}")
+                print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
+                print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
             else:
                 print("Clusters are the same")
 
