@@ -648,7 +648,7 @@ NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
 
 void ProcessedGraph::estimateTotalVolume() {
   TExeTm EstTm;  
-	int sample_size = 2401; // FIXME
+	int sample_size = 2401; 
 	if (numNodes < sample_size)
 	{
 		for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI++)

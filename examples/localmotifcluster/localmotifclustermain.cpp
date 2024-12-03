@@ -14,6 +14,9 @@ int main(int argc, char* argv[]) {
 
   const bool IsDirected = 
     Env.GetIfArgPrefixBool("-d:", false, "Directed graph?");
+  printf("\"Directed\": ");
+  IsDirected ? printf("true") : printf("false") ;
+  printf(",\n");
 
   ProcessedGraph graph_p;
   if (IsDirected) {
@@ -22,6 +25,9 @@ int main(int argc, char* argv[]) {
     const TStr motif =
       Env.GetIfArgPrefixStr("-m:", "triad", "Motif type");
     MotifType mt = ParseMotifType(motif, IsDirected);
+    printf("\"Motif\": \"");
+    printf(motif.CStr());
+    printf("\",\n");
     PNGraph graph;
     if (graph_filename.GetFExt().GetLc() == ".ngraph") {
       TFIn FIn(graph_filename);
@@ -41,6 +47,9 @@ int main(int argc, char* argv[]) {
     const TStr motif =
       Env.GetIfArgPrefixStr("-m:", "clique3", "Motif type");
     MotifType mt = ParseMotifType(motif, IsDirected);
+    printf("\"Motif\": \"");
+    printf(motif.CStr());
+    printf("\",\n");
     PUNGraph graph;
     if (graph_filename.GetFExt().GetLc() == ".ungraph") {
       TFIn FIn(graph_filename);
@@ -71,8 +80,8 @@ int main(int argc, char* argv[]) {
     mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
-    printf("\"Size of Found Cluster\": %d, \n", mappr.getCluster().Len());
-    printf("\"Nodes of Cluster\": [");
+    printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
+    printf("\"Found Cluster\": [");
     printf("%d", int(mappr.getCluster()[0]));
     for (int i = 1; i < mappr.getCluster().Len(); i++) {
       printf(", %d", int(mappr.getCluster()[i]));

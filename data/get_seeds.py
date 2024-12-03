@@ -24,15 +24,21 @@ def get_k_longest_lists(lists, k):
 	return sorted(lists, key=len, reverse=True)[:k]
 
 # Example usage
-def pick_seeds(file, k):
-	# lists = read_list_of_lists(file)
-	lists = read_labels(file)
+def pick_seeds(file, labels_or_lists, k, seed=None):
+	if seed:
+		random.seed(seed)
+	if labels_or_lists == "lists":
+		lists = read_list_of_lists(file)
+	elif labels_or_lists == "labels":
+		lists = read_labels(file)
+	else:
+		raise ValueError("labels_or_lists should be either 'lists' or 'labels'")
 
 	longest_lists = get_k_longest_lists(lists, k)
 
 	chosen_nodes = []
 	for lst in longest_lists:
 		# Choose a random node from each list
-		chosen_nodes.append((random.choice(lst), len(lst)))
+		chosen_nodes.append((random.choice(lst,), lst))
 		
 	return chosen_nodes
