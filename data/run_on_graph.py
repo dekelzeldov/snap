@@ -26,7 +26,7 @@ base_args = [
     "-silent:Y"
 ]
 
-seeds = get_seeds.pick_seeds(seed_data_file, labels_or_lists, num_seeds, seed=10)
+seeds = get_seeds.pick_seeds(seed_data_file, labels_or_lists, num_seeds, seed=None)
 
 def system_info():
     system_info = {
