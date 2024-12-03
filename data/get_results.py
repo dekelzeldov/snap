@@ -24,9 +24,9 @@ def get_results(graph):
                     found_results[variant].append((seed_results_dict["Found Cluster Size"], seed_results_dict["Run Time (seconds)"]))
 
             if cluseters["Local"] != cluseters["Purely Local"]:
-                print("Clusters are not the same")
-                print(f"\t Local-Purely: {cluseters['Local']-cluseters['Purely Local']}")
-                print(f"\t Purely-Local: {cluseters['Purely Local']-cluseters['Local']}")
+                print("Clusters are NOT the same")
+                # print(f"\t Local-Purely: {cluseters['Local']-cluseters['Purely Local']}")
+                # print(f"\t Purely-Local: {cluseters['Purely Local']-cluseters['Local']}")
             else:
                 print("Clusters are the same")
 

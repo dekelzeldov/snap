@@ -59,9 +59,15 @@ tutorials/*
 tutorials/.DS_Store
 tutorials/*.dSYM
 benchmarking/*.dat
+
+# our files
 data/com-dblp.top5000.cmty.txt
 data/com-dblp.ungraph.txt
+data/com-dblp.ungraph/*
 data/d10000mu0.5.dat
 data/email-Eu-core-department-labels.txt
 data/email-Eu-core.txt
-.vscode/settings.json
+data/email-Eu-core/*
+.vscode/
+examples/localmotifcluster/localmotifclustermain
+examples/purelylocalmotifcluster/purelylocalmotifclustermain
