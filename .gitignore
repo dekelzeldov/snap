@@ -59,3 +59,9 @@ tutorials/*
 tutorials/.DS_Store
 tutorials/*.dSYM
 benchmarking/*.dat
+data/com-dblp.top5000.cmty.txt
+data/com-dblp.ungraph.txt
+data/d10000mu0.5.dat
+data/email-Eu-core-department-labels.txt
+data/email-Eu-core.txt
+.vscode/settings.json

@@ -647,7 +647,8 @@ NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
 }
 
 void ProcessedGraph::estimateTotalVolume() {
-	int sample_size = 55; // FIXME
+  TExeTm EstTm;  
+	int sample_size = 2401; // FIXME
 	if (numNodes < sample_size)
 	{
 		for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI++)
@@ -690,6 +691,7 @@ void ProcessedGraph::estimateTotalVolume() {
 
     TotalVolEst = sampleVol * factore;
   }
+  printf("\"Vol Est. Time (seconds)\": %.2f ,\n", EstTm.GetSecs());
 }
 
 void ProcessedGraph::printCounts(int NodeId) {  
@@ -798,9 +800,9 @@ bool ProcessedGraph::totalVolume_lte(float value) {
 
 void ProcessedGraph::printTotalVolume() const {
   if (TotalVol != -1) {
-    printf("\"Total volume\": %.2f. \n", TotalVol);
+    printf("\"Total volume\": %.2f \n", TotalVol);
   } else {
-    printf("\"Est. Total volume\": %.2f. \n", TotalVolEst);
+    printf("\"Est. Total volume\": %.2f \n", TotalVolEst);
   }
 }
 

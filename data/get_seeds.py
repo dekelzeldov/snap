@@ -9,13 +9,24 @@ def read_list_of_lists(file_path):
 			list_of_lists.append(number_list)
 	return list_of_lists
 
+def read_labels(file_path):
+	with open(file_path, 'r') as file:
+		labels = {}
+		for line in file:
+			node, label = map(int, line.strip().split())
+			if label not in labels:
+				labels[label] = []
+			labels[label].append(node)
+	return labels.values()
+
 def get_k_longest_lists(lists, k):
 	# Sort the lists by their length in descending order and get the first k lists
 	return sorted(lists, key=len, reverse=True)[:k]
 
 # Example usage
 def pick_seeds(file, k):
-	lists = read_list_of_lists(file)
+	# lists = read_list_of_lists(file)
+	lists = read_labels(file)
 
 	longest_lists = get_k_longest_lists(lists, k)
 

@@ -20,7 +20,8 @@ exe_paths = [
 base_args = [
     "-i:"+graph_file,
     "-d:Y",
-    "-m:FFLoop"
+    "-m:FFLoop",
+    "-silent:Y"
 ]
 
 seeds = get_seeds.pick_seeds(seed_data_file, num_seeds)
@@ -55,9 +56,10 @@ for seed, _ in seeds:
         if not os.path.exists(out_path):
             os.makedirs(out_path)
         # Run the command and capture the output
-        command = ["srun", exe_path] + base_args + [f"-s:{seed}"]
+        command = [exe_path] + base_args + [f"-s:{seed}"]
+        # command = ["srun"] + command
         print(f"Running: {' '.join(command)}")
-        print(f"\tOutput File: {' '.join(command)}")
+        print(f"\tOutput File: {out_file}")
         commands.append(subprocess.Popen(command,
 				stdout=open(out_file, 'w'),
 				stderr=subprocess.STDOUT))
@@ -65,9 +67,9 @@ for seed, _ in seeds:
     run_info_dict["Output Files"].append(out_files)
 
 with open(f'run_on_graph_{graph_file}.json', 'w') as fp:
-    json.dump(run_info_dict, fp)
+    json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)
     
 for c in commands:
     c.wait()
     if c.returncode != 0:
-        print(f"{command.args} \n\t exited with code: {c.returncode}")
+        print(f"{c.args} \n\t exited with code: {c.returncode}")
