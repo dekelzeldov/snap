@@ -74,3 +74,6 @@ examples/purelylocalmotifcluster/purelylocalmotifclustermain
 data/wiki-topcats-categories.txt
 data/wiki-topcats.txt
 data/wiki-topcats/*
+data/com-orkut.top5000.cmty.txt
+data/com-orkut.ungraph.txt
+data/com-orkut.ungraph/*
