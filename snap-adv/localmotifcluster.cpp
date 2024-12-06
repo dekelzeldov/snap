@@ -116,7 +116,9 @@ Section: Preprocessing unweighted graphs, including:
 // Initializing for undirected graph input.
 ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   Graph_org = graph;
+  TExeTm WeightsTm;
   assignWeights_undir(mt);
+  printf("\"Time for assigning weights\": %f,\n", WeightsTm.GetSecs());
 }
 
 // This function will return true if degree of nodeID1 is higher than nodeID2.
@@ -246,8 +248,10 @@ void ProcessedGraph::assignWeights_undir(MotifType mt) {
 // Initializing for directed graph input.
 ProcessedGraph::ProcessedGraph(PNGraph graph, MotifType mt){
   Graph_org = TSnap::ConvertGraph<PUNGraph>(graph);
+  TExeTm WeightsTm;
   countDirTriadMotif(graph);
   assignWeights_dir(mt);
+  printf("\"Time for assigning weights\": %f,\n", WeightsTm.GetSecs());
 }
  
 // Check the edge information between nodeID and nbrID;

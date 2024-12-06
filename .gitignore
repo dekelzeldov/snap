@@ -71,3 +71,6 @@ data/email-Eu-core/*
 .vscode/
 examples/localmotifcluster/localmotifclustermain
 examples/purelylocalmotifcluster/purelylocalmotifclustermain
+data/wiki-topcats-categories.txt
+data/wiki-topcats.txt
+data/wiki-topcats/*

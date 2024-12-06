@@ -12,7 +12,7 @@ def get_results(graph):
 
     with open(os.path.join(folder, f"run_on_graph_{graph}.json")) as f:
         overal_dict = json.load(f)
-        for _, seed_info_dict in overal_dict["Results"].items():
+        for seed, seed_info_dict in overal_dict["Results"].items():
             cluseters = {}
             cluseters["Expected"] = set(seed_info_dict["Expected Cluster"])
             for variant in Variants:
@@ -24,7 +24,7 @@ def get_results(graph):
                     found_results[variant].append((seed_results_dict["Found Cluster Size"], seed_results_dict["Run Time (seconds)"]))
 
             if cluseters["Local"] != cluseters["Purely Local"]:
-                print("Clusters are NOT the same")
+                print(f"Clusters are NOT the same for seed {seed}")
                 print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
                 print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
             else:
@@ -40,5 +40,5 @@ def get_results(graph):
         plt.ylabel("Run Time (seconds)")
         plt.title(f"Run Time vs {name} Cluster Size")
         plt.legend(list(Variants)) 
-        plt.savefig(os.path.join(folder, f"{variant}_run_time_vs_{name.lower().replace(" ", "_")}_cluster_size.png"))
+        plt.savefig(os.path.join(folder, f"{variant}_run_time_vs_{name.lower().replace(' ', '_')}_cluster_size.png"))
 

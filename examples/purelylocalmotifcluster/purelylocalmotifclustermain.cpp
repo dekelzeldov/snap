@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     int seed = seeds[i];
     printf("\"Seed\": %d, \n", int(seed));
     MAPPR mappr;
-    printf("\"Total Volume\": %.2f, \n", graph_p.getTotalVolume());
+    graph_p.printTotalVolume();
     mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
