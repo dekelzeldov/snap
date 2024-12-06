@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[]) {
   printf("{\n");
-  printf("\"Verssion\": \"Purely Local\",\n");
+  printf("\"Version\": \"Purely Local\",\n");
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs(TStr::Fmt("Purely Local motif clustering. build: %s, %s. Time: %s",
        __TIME__, __DATE__, TExeTm::GetCurTm()));  
@@ -70,16 +70,30 @@ int main(int argc, char* argv[]) {
     Env.GetIfArgPrefixFlt("-a:", 0.98, "alpha");
   const TFlt eps =
     Env.GetIfArgPrefixFlt("-e:", 0.0001, "eps");
+  const TFlt vol =
+    Env.GetIfArgPrefixFlt("-v:", 0, "total volume");
 
   printf("\"Number of Seeds\": %d, \n", seeds.Len());
   for (int i = 0; i < seeds.Len(); i++) {
     int seed = seeds[i];
     printf("\"Seed\": %d, \n", int(seed));
     MAPPR mappr;
-    graph_p.printTotalVolume();
-    mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
+    int tv;
+    if (vol != TFlt(0)) {
+      tv = vol;
+      printf("\"Input Total Volume\": %d, \n", tv);
+    } else {
+      graph_p.estimateTotalVolume();
+      tv = graph_p.getTotalVolume();
+      graph_p.printTotalVolume();
+    }
+    printf("\"Number of Nodes\": %.2f, \n", graph_p.numNodes);
+ 
+    TExeTm APPRTm; 
+    mappr.computeAPPR(graph_p, seed, alpha, eps / tv * graph_p.numNodes);
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
+    printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
     printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
     printf("\"Found Cluster\": [");
     printf("%d", int(mappr.getCluster()[0]));
@@ -88,7 +102,7 @@ int main(int argc, char* argv[]) {
     }
     printf("], \n");
     
-    printf("\"Weights Computed\": \"%d/%d\", \n", graph_p.getWeights().Len(), graph_p.numNodes);
+    printf("\"Weights Computed\": \"%d/%d (%d%%)\", \n", graph_p.getWeights().Len(), graph_p.numNodes, 100*graph_p.getWeights().Len()/graph_p.numNodes);
   }
 
   Catch

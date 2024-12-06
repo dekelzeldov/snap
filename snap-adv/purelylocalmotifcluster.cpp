@@ -118,7 +118,6 @@ ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   Directed = false;
   numNodes = Graph_org->GetNodes();
   prepWeights_undir();
-  estimateTotalVolume();
 }
 
 
@@ -319,7 +318,6 @@ ProcessedGraph::ProcessedGraph(PNGraph graph, MotifType mt){
   Directed = true;
   numNodes = Graph_org->GetNodes();
   prepWeights_dir();
-  estimateTotalVolume();
 }
  
 // Check the edge information between nodeID and nbrID;
@@ -691,7 +689,7 @@ void ProcessedGraph::estimateTotalVolume() {
 
     TotalVolEst = sampleVol * factore;
   }
-  printf("\"Vol Est. Time (seconds)\": %.2f ,\n", EstTm.GetSecs());
+  printf("\"Vol Est. Time (seconds)\": %.2f,\n", EstTm.GetSecs());
 }
 
 void ProcessedGraph::printCounts(int NodeId) {  
@@ -741,7 +739,7 @@ void ProcessedGraph::printWeights() {
     float d_w = Weights(NodeId)(NodeId);
     printf("\td_w(%d) = %.2f.\n", NodeId, d_w);
   }
-  printf("Total volume = %.2f. \n", TotalVol);
+  printf("Total Volume = %.2f. \n", TotalVol);
   Graph_trans->Dump();
 }
 
@@ -800,9 +798,9 @@ bool ProcessedGraph::totalVolume_lte(float value) {
 
 void ProcessedGraph::printTotalVolume() const {
   if (TotalVol != -1) {
-    printf("\"Total volume\": %.2f \n", TotalVol);
+    printf("\"Total Volume\": %.2f, \n", TotalVol);
   } else {
-    printf("\"Est. Total volume\": %.2f \n", TotalVolEst);
+    printf("\"Est. Total Volume\": %.2f, \n", TotalVolEst);
   }
 }
 

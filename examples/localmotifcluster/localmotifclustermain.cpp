@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[]) {
   printf("{\n");
-  printf("\"Verssion\": \"Local\",\n");
+  printf("\"Version\": \"Local\",\n");
   Env = TEnv(argc, argv, TNotify::StdNotify);
   Env.PrepArgs(TStr::Fmt("Local motif clustering. build: %s, %s. Time: %s",
        __TIME__, __DATE__, TExeTm::GetCurTm()));  
@@ -77,9 +77,12 @@ int main(int argc, char* argv[]) {
     printf("\"Seed\": %d, \n", int(seed));
     MAPPR mappr;
     printf("\"Total Volume\": %.2f, \n", graph_p.getTotalVolume());
+    printf("\"Number of Nodes\": %.2f, \n", graph_p.getTransformedGraph()->GetNodes());
+    TExeTm APPRTm; 
     mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
     mappr.sweepAPPR(-1);
     // mappr.printProfile();
+    printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
     printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
     printf("\"Found Cluster\": [");
     printf("%d", int(mappr.getCluster()[0]));
