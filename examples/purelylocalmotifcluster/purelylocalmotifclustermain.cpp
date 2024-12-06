@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     printf("\"Motif\": \"");
     printf(motif.CStr());
     printf("\",\n");
+    TExeTm ReadGraphTm;
     PNGraph graph;
     if (graph_filename.GetFExt().GetLc() == ".ngraph") {
       TFIn FIn(graph_filename);
@@ -38,6 +39,7 @@ int main(int argc, char* argv[]) {
       graph = TSnap::LoadEdgeList<PNGraph>(graph_filename, 0, 1);
     }
     TSnap::DelSelfEdges(graph);
+    printf("\"Read Graph Time (seconds)\": %.2f, \n", ReadGraphTm.GetSecs());
     graph_p = ProcessedGraph(graph, mt);
 
   } else {
@@ -50,6 +52,7 @@ int main(int argc, char* argv[]) {
     printf("\"Motif\": \"");
     printf(motif.CStr());
     printf("\",\n");
+    TExeTm ReadGraphTm;
     PUNGraph graph;
     if (graph_filename.GetFExt().GetLc() == ".ungraph") {
       TFIn FIn(graph_filename);
@@ -60,8 +63,10 @@ int main(int argc, char* argv[]) {
       graph = TSnap::LoadEdgeList<PUNGraph>(graph_filename, 0, 1);
     }
     TSnap::DelSelfEdges(graph);
+    printf("\"Read Graph Time (seconds)\": %.2f, \n", ReadGraphTm.GetSecs());
     graph_p = ProcessedGraph(graph, mt);
   }
+  printf("\"Weight Computation Time (seconds)\": 0,\n");
 
 
   const TVec<TInt> seeds =

@@ -118,7 +118,7 @@ ProcessedGraph::ProcessedGraph(PUNGraph graph, MotifType mt){
   Graph_org = graph;
   TExeTm WeightsTm;
   assignWeights_undir(mt);
-  printf("\"Time for assigning weights\": %f,\n", WeightsTm.GetSecs());
+  printf("\"Weight Computation Time (seconds)\": %f,\n", WeightsTm.GetSecs());
 }
 
 // This function will return true if degree of nodeID1 is higher than nodeID2.
@@ -251,7 +251,7 @@ ProcessedGraph::ProcessedGraph(PNGraph graph, MotifType mt){
   TExeTm WeightsTm;
   countDirTriadMotif(graph);
   assignWeights_dir(mt);
-  printf("\"Time for assigning weights\": %f,\n", WeightsTm.GetSecs());
+  printf("\"Weight Computation Time (seconds)\": %f,\n", WeightsTm.GetSecs());
 }
  
 // Check the edge information between nodeID and nbrID;
