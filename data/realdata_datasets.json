@@ -1,32 +1,32 @@
 [
 {
 	"name": "com-dblp",
-	"graph_file" : "com-dblp.ungraph.txt",
-	"seed_data_file" : "com-dblp.top5000.cmty.txt",
+	"graph_path" : "./real_data/com-dblp.ungraph.txt",
+	"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
 	"labels_or_lists" : "lists",
 	"directed" : false,
 	"motif": "clique4"
 },
 {
 	"name": "com-orkut",
-	"graph_file" : "com-orkut.ungraph.txt",
-	"seed_data_file" : "com-orkut.top5000.cmty.txt",
+	"graph_path" : "./real_data/com-orkut.ungraph.txt",
+	"seed_data_path" : "./real_data/com-orkut.top5000.cmty.txt",
 	"labels_or_lists" : "lists",
 	"directed" : false,
 	"motif": "clique3"
 },
 {
 	"name": "email-Eu-core",
-	"graph_file" : "email-Eu-core.txt",
-	"seed_data_file" : "email-Eu-core-department-labels.txt",
+	"graph_path" : "./real_data/email-Eu-core.txt",
+	"seed_data_path" : "./real_data/email-Eu-core-department-labels.txt",
 	"labels_or_lists" : "labels",
 	"directed" : true,
 	"motif": "FFLoop"
 },
 {
 	"name": "wiki-topcats",
-	"graph_file" : "wiki-topcats.txt",
-	"seed_data_file" : "wiki-topcats-categories.txt",
+	"graph_path" : "./real_data/wiki-topcats.txt",
+	"seed_data_path" : "./real_data/wiki-topcats-categories.txt",
 	"labels_or_lists" : "lists",
 	"directed" : true,
 	"motif": "m1"
