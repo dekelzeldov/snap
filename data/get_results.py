@@ -58,14 +58,12 @@ def get_volume(graph):
     folder = os.path.join(".", graph)
     Total_Volume = None
     with open(os.path.join(folder, f"run_on_graph_{graph}.json")) as f:
-        print(f"Found past run info in {os.path.join(folder, f'run_on_graph_{graph}.json')}")
         overal_dict = json.load(f)
         if "Total Volume" in overal_dict.keys():
             Total_Volume = overal_dict["Total Volume"]
         for _, seed_info_dict in overal_dict["Results"].items():
             for variant in Variants:
                 with open(seed_info_dict[variant]) as f:
-                    print(f"\tFound past run info in {seed_info_dict[variant]}")
                     seed_results_dict = json.load(f)
 
                     if "Total Volume" in seed_results_dict.keys():
