@@ -116,13 +116,12 @@ def check_volume(graph):
         overal_dict = json.load(f)
         Total_Volume = get_total_volume(graph, overal_dict["Motif"])
         for _, seed_info_dict in overal_dict["Results"].items():
-            for variant in Variants:
-                if variant in seed_info_dict.keys():
-                    with open(seed_info_dict["Out Files"][variant]) as f:
-                        seed_results_dict = json.load(f)
-                        if "Total Volume" in seed_results_dict.keys():
-                            if Total_Volume is None:
-                                Total_Volume = seed_results_dict["Total Volume"]
-                            else:
-                                assert Total_Volume == seed_results_dict["Total Volume"], f"Total Volume is not as expected in {graph_json} or not consistent between runs"
+            for variant in seed_info_dict['Out Files'].keys():
+                with open(seed_info_dict['Out Files'][variant]) as f:
+                    seed_results_dict = json.load(f)
+                    if "Total Volume" in seed_results_dict.keys():
+                        if Total_Volume is None:
+                            Total_Volume = seed_results_dict["Total Volume"]
+                        else:
+                            assert Total_Volume == seed_results_dict["Total Volume"], f"Total Volume is not as expected in {graph_json} or not consistent between runs"
         set_total_volume(graph, overal_dict["Motif"], Total_Volume)

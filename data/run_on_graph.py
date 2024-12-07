@@ -57,6 +57,9 @@ for dataset in dataset_list:
 
     Total_Volume = get_results.get_total_volume(graph_name, motif)
 
+    if just_get_volume and Total_Volume:
+        continue
+
     run_info_dict = {
         "System Info": system_info,
         "Graph File":  graph_file,
