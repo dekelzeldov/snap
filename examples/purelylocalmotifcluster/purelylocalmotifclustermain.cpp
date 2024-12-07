@@ -92,7 +92,8 @@ int main(int argc, char* argv[]) {
       tv = graph_p.getTotalVolume();
       graph_p.printTotalVolume();
     }
-    printf("\"Number of Nodes\": %.2f, \n", graph_p.numNodes);
+    printf("\"Number of Nodes\": %.2f, \n", graph_p.getTransformedGraph()->GetNodes());
+    printf("\"Number of Edges\": %.2f, \n", graph_p.getTransformedGraph()->GetEdges());
  
     TExeTm APPRTm; 
     mappr.computeAPPR(graph_p, seed, alpha, eps / tv * graph_p.numNodes);

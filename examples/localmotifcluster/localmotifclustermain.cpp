@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
     MAPPR mappr;
     printf("\"Total Volume\": %.2f, \n", graph_p.getTotalVolume());
     printf("\"Number of Nodes\": %.2f, \n", graph_p.getTransformedGraph()->GetNodes());
+    printf("\"Number of Edges\": %.2f, \n", graph_p.getTransformedGraph()->GetEdges());
     if (!just_volume){
       TExeTm APPRTm; 
       mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
