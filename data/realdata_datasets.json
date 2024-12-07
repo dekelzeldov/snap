@@ -5,7 +5,15 @@
 	"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
 	"labels_or_lists" : "lists",
 	"directed" : false,
-	"motif": "clique4"
+	"motif": "clique3"
+},
+{
+	"name": "com-youtube",
+	"graph_path" : "./real_data/com-youtube.ungraph.txt",
+	"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
+	"labels_or_lists" : "lists",
+	"directed" : false,
+	"motif": "clique3"
 },
 {
 	"name": "com-orkut",
@@ -21,7 +29,7 @@
 	"seed_data_path" : "./real_data/email-Eu-core-department-labels.txt",
 	"labels_or_lists" : "labels",
 	"directed" : true,
-	"motif": "FFLoop"
+	"motif": "m1"
 },
 {
 	"name": "wiki-topcats",
