@@ -11,113 +11,113 @@ run=0
 num_seeds = 10
 rand_seed = None
 
-graph_file = "com-dblp.ungraph.txt"
-seed_data_file = "com-dblp.top5000.cmty.txt"
-labels_or_lists = "lists"
+just_get_volume = False
 
-base_args = [
-    "-i:"+graph_file,
-    "-d:N",
-    "-m:clique3",
-    "-silent:Y"
-]
-
-# graph_file = "email-Eu-core.txt"
-# seed_data_file = "email-Eu-core-department-labels.txt"
-# labels_or_lists = "labels"
-
-# base_args = [
-#     "-i:"+graph_file,
-#     "-d:Y",
-#     "-m:FFLoop",
-#     "-silent:Y"
-# ]
-
-# graph_file = "wiki-topcats.txt"
-# seed_data_file = "wiki-topcats-categories.txt"
-# labels_or_lists = "lists"
-
-# base_args = [
-#     "-i:"+graph_file,
-#     "-d:Y",
-#     "-m:FFLoop",
-#     "-silent:Y"
-# ]
-
-
+dataset_file = "./realdata_datasets.json"
+with open(dataset_file) as f:
+    dataset_list = json.load(f)
+    
 # Run paths
 exe_paths = {
     "Local": ["../examples/localmotifcluster/localmotifclustermain"],
     "Purely Local": ["../examples/purelylocalmotifcluster/purelylocalmotifclustermain"],
 }
 
-seeds = get_seeds.pick_seeds(seed_data_file, labels_or_lists, num_seeds, seed=rand_seed)
+if just_get_volume:
+    exe_paths.pop("Purely Local")
 
-graph_file_name = ".".join(os.path.basename(graph_file).split(".")[:-1])
-out_path = os.path.join(".",graph_file_name)
-out_files_path = os.path.join(out_path, "seeds_results")
-run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_file_name}.json')
+for dataset in dataset_list:
+    graph_name = dataset["name"]
+    graph_file = dataset["graph_path"]
+    seed_data_file = dataset["seed_data_path"]
+    labels_or_lists = dataset["labels_or_lists"]
+    motif = dataset["motif"]
+    base_args = []
+    base_args.append(f"-i:{graph_file}")
+    base_args.append(f"-d:{'Y' if dataset['directed'] else 'N'}")
+    base_args.append(f"-m:{motif}")
+    base_args.append(f"-silent:Y")
+    if just_get_volume:
+        base_args.append("-v:Y")
 
-if os.path.isfile(run_on_graph_file):
-    with open(run_on_graph_file) as f:
-        past_run_info_dict = json.load(f)
-        if "Total Volume" in past_run_info_dict.keys():
-            exe_paths["Purely Local"].append(f"-v:{past_run_info_dict['Total Volume']}")
+    seeds = get_seeds.pick_seeds(seed_data_file, labels_or_lists, num_seeds, seed=rand_seed)
 
-def system_info():
-    system_info = {
-        "System": platform.system(),
-        "Release": platform.release(),
-        "Version": platform.version(),
-        "Machine": platform.machine(),
-        "Processor": platform.processor(),
-        "Architecture": platform.architecture()
+    out_path = os.path.join(".", "results" ,graph_name)
+    out_files_path = os.path.join(out_path, "seeds_results")
+    run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}.json')
+
+    if "Purely Local" in exe_paths.keys():
+        Total_Volume = get_results.get_total_volume(graph_name, motif)
+        if just_get_volume and Total_Volume is not None:
+            break
+        exe_paths["Purely Local"].append(f"-v:{Total_Volume}")
+
+
+    def system_info():
+        system_info = {
+            "System": platform.system(),
+            "Release": platform.release(),
+            "Version": platform.version(),
+            "Machine": platform.machine(),
+            "Processor": platform.processor(),
+            "Architecture": platform.architecture()
+        }
+        return system_info
+
+    run_info_dict = {
+        "System Info": system_info(),
+        "Graph File":  graph_file,
+        "Exicutions": exe_paths,
+        "Directed": dataset['directed'],
+        "Motif": motif,
+        "Results": {}
     }
-    return system_info
 
-run_info_dict = {
-    "System Info": system_info(),
-    "Graph File":  graph_file,
-    "Exicutions": exe_paths,
-    "Base Arguments": base_args,
-    "Results": {}
-}
+    if just_get_volume:
+        run_info_dict["Just For Volume"] = True
 
-commands = []
-for seed, expected in seeds:
-    result = {}
-    result["Expected Cluster Size"] = len(expected)
-    result["Expected Cluster"] = expected
-    for variant, exe_path in exe_paths.items():
-        # Set the log file name
-        out_file = os.path.join(out_files_path, f"{os.path.basename('_'.join(exe_path))}_seed{seed}_run{run}.json")
-        if not os.path.exists(out_files_path):
-            os.makedirs(out_files_path)
+    commands = []
+    for seed, expected in seeds:
+        result = {}
+        result["Expected Cluster Size"] = len(expected)
+        result["Expected Cluster"] = expected
+        for variant, exe_path in exe_paths.items():
+            # Set the log file name
+            out_file = os.path.join(out_files_path, f"{variant.lower()}_seed{seed}_run{run}.json")
+            if not os.path.exists(out_files_path):
+                os.makedirs(out_files_path)
 
-        # Run the command and capture the output
-        command = exe_path + base_args + [f"-s:{seed}"]
-        # command = ["srun"] + command
+            # Run the command and capture the output
+            command = exe_path + base_args + [f"-s:{seed}"]
+            # command = ["srun"] + command
 
-        print(f"Running: {' '.join(command)}")
-        print(f"\tOutput File: {out_file}")
+            # print(f"Running: {' '.join(command)}")
+            # print(f"\tOutput File: {out_file}")
 
-        commands.append(subprocess.Popen(command,
-				stdout=open(out_file, 'w'),
-				stderr=subprocess.STDOUT))
-        result[variant] = out_file
+            commands.append(subprocess.Popen(command,
+                    stdout=open(out_file, 'w'),
+                    stderr=subprocess.STDOUT))
+            result[variant] = out_file
 
-    run_info_dict["Results"][seed] = result
+        run_info_dict["Results"][seed] = result
+
+        if just_get_volume:
+            break
+
+    with open(run_on_graph_file, 'w') as fp:
+        json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)
+
+    for c in commands:
+        c.wait()
+        if c.returncode != 0:
+            print(f"{' '.join(c.args)} \n\t exited with code: {c.returncode}")
+
+    get_results.check_volume(graph_name)
+
+    if not just_get_volume:
+        get_results.make_graph_results(graph_name)
+
+if not just_get_volume:
+    get_results.make_multigraphs_results([graph["name"] for graph in dataset_list])
 
 
-with open(run_on_graph_file, 'w') as fp:
-    json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)
-
-for c in commands:
-    c.wait()
-    if c.returncode != 0:
-        print(f"{' '.join(c.args)} \n\t exited with code: {c.returncode}")
-get_results.get_results(graph_file_name)
-
-run_info_dict["Total Volume"] = get_results.get_volume(graph_file_name)
-with open(run_on_graph_file, 'w') as fp:
-    json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)

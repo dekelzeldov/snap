@@ -74,6 +74,11 @@ int main(int argc, char* argv[]) {
     Env.GetIfArgPrefixFlt("-a:", 0.98, "alpha");
   const TFlt eps =
     Env.GetIfArgPrefixFlt("-e:", 0.0001, "eps");
+  const TFlt just_volume =
+    Env.GetIfArgPrefixBool("-v:", false, "just volume");
+  printf("\"Just Volume\": ");
+  just_volume ? printf("true") : printf("false") ;
+  printf(",\n");
 
   printf("\"Number of Seeds\": %d, \n", seeds.Len());
   for (int i = 0; i < seeds.Len(); i++) {
@@ -82,18 +87,20 @@ int main(int argc, char* argv[]) {
     MAPPR mappr;
     printf("\"Total Volume\": %.2f, \n", graph_p.getTotalVolume());
     printf("\"Number of Nodes\": %.2f, \n", graph_p.getTransformedGraph()->GetNodes());
-    TExeTm APPRTm; 
-    mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
-    mappr.sweepAPPR(-1);
-    // mappr.printProfile();
-    printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
-    printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
-    printf("\"Found Cluster\": [");
-    printf("%d", int(mappr.getCluster()[0]));
-    for (int i = 1; i < mappr.getCluster().Len(); i++) {
-      printf(", %d", int(mappr.getCluster()[i]));
+    if (!just_volume){
+      TExeTm APPRTm; 
+        mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
+        mappr.sweepAPPR(-1);
+      // mappr.printProfile();
+      printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
+      printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
+      printf("\"Found Cluster\": [");
+      printf("%d", int(mappr.getCluster()[0]));
+      for (int i = 1; i < mappr.getCluster().Len(); i++) {
+        printf(", %d", int(mappr.getCluster()[i]));
+      }
+      printf("], \n");
     }
-    printf("], \n");
 
   printf("\"Weights Computed\": \"N/A\",\n");
   }
