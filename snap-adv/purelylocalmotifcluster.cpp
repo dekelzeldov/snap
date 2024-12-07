@@ -725,19 +725,23 @@ void ProcessedGraph::printCounts() {
 void ProcessedGraph::printWeights() {  
   for (TUNGraph::TNodeI NI = Graph_org->BegNI(); NI < Graph_org->EndNI(); NI ++ ) {
     int NodeId = NI.GetId();
-    for (int e = 0; e < NI.GetOutDeg(); e++) {
-      int NbrId = NI.GetOutNId(e);
-      printf("(%d, %d): ", NodeId, NbrId);
-      if (Weights(NodeId).IsKey(NbrId)) {
-        float weight = Weights(NodeId)(NbrId);
-        printf("%.2f ", NbrId, weight);
-      } else {
-        printf("Not a key in Weights");
+    if (Weights.IsKey(NodeId)) {
+      for (int e = 0; e < NI.GetOutDeg(); e++) {
+        int NbrId = NI.GetOutNId(e);
+        printf("(%d, %d): ", NodeId, NbrId);
+        if (Weights.GetDat(NodeId).IsKey(NbrId)) {
+          float weight = Weights.GetDat(NodeId).GetDat(NbrId);
+          printf("%.2f ", weight);
+        } else {
+          printf("Not a key in Weights");
+        }
+        printf("\n");
       }
-      printf("\n");
+      float d_w = Weights.GetDat(NodeId).GetDat(NodeId);
+      printf("\td_w(%d) = %.2f.\n", NodeId, d_w);
+    } else {
+      printf("Node %d is not a key in Weights.\n", NodeId);
     }
-    float d_w = Weights(NodeId)(NodeId);
-    printf("\td_w(%d) = %.2f.\n", NodeId, d_w);
   }
   printf("Total Volume = %.2f. \n", TotalVol);
   Graph_trans->Dump();
@@ -768,7 +772,7 @@ bool ProcessedGraph::totalVolume_lte(float value) {
     return false;
   }
   int numNodes = Graph_org->GetMxNId();
-  while (TotalVolLB <= value and TotalVol != -1) {
+  while (TotalVolLB <= value and TotalVol == -1) {
     while (Dependants.BegI() < Dependants.EndI()) {
       TInt NIID = Dependants.BegI().GetKey();
       while (Dependants(NIID).BegI() < Dependants(NIID).EndI()) {
@@ -776,7 +780,9 @@ bool ProcessedGraph::totalVolume_lte(float value) {
           return false;
         }
         int key = Dependants(NIID).BegI().GetKey();
-        assignWeights(NIID);
+        if (!Weights.IsKey(key)) {
+          assignWeights(key);
+        }
         Dependants(NIID).DelKey(key);
       }
       Dependants.DelKey(NIID);
@@ -784,7 +790,7 @@ bool ProcessedGraph::totalVolume_lte(float value) {
         return false;
       }
     }
-    while (Weights.Len()<numNodes and ToCompute < numNodes and !Computed[ToCompute]) {
+    while (Weights.Len()<numNodes and ToCompute < numNodes and Weights.IsKey(ToCompute)) {
       ToCompute ++;
     }
     if (ToCompute == numNodes) {
@@ -794,6 +800,11 @@ bool ProcessedGraph::totalVolume_lte(float value) {
     assignWeights(ToCompute);
     ToCompute ++;
   }
+  if (TotalVolLB > value) {
+    
+    return false;
+  }
+  return (TotalVol <= value);
 }
 
 void ProcessedGraph::printTotalVolume() const {

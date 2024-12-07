@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
     TExeTm APPRTm; 
     mappr.computeAPPR(graph_p, seed, alpha, eps / tv * graph_p.numNodes);
     mappr.sweepAPPR(-1);
-    // mappr.printProfile();
+    //mappr.printProfile();
     printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
     printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
     printf("\"Found Cluster\": [");

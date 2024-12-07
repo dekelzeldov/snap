@@ -89,9 +89,9 @@ int main(int argc, char* argv[]) {
     printf("\"Number of Nodes\": %.2f, \n", graph_p.getTransformedGraph()->GetNodes());
     if (!just_volume){
       TExeTm APPRTm; 
-        mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
-        mappr.sweepAPPR(-1);
-      // mappr.printProfile();
+      mappr.computeAPPR(graph_p, seed, alpha, eps / graph_p.getTotalVolume() * graph_p.getTransformedGraph()->GetNodes());
+      mappr.sweepAPPR(-1);
+      //mappr.printProfile();
       printf("\"APPR Time (seconds)\": %.2f, \n", APPRTm.GetSecs());
       printf("\"Found Cluster Size\": %d, \n", mappr.getCluster().Len());
       printf("\"Found Cluster\": [");

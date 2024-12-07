@@ -8,7 +8,7 @@ import json
 
 run=0
 # Generate n random numbers as seeds
-num_seeds = 10
+num_seeds = 2
 rand_seed = None
 
 just_get_volume = False
@@ -25,6 +25,15 @@ exe_paths = {
 
 if just_get_volume:
     exe_paths.pop("Purely Local")
+
+system_info = {
+    "System": platform.system(),
+    "Release": platform.release(),
+    "Version": platform.version(),
+    "Machine": platform.machine(),
+    "Processor": platform.processor(),
+    "Architecture": platform.architecture()
+}
 
 for dataset in dataset_list:
     graph_name = dataset["name"]
@@ -46,26 +55,10 @@ for dataset in dataset_list:
     out_files_path = os.path.join(out_path, "seeds_results")
     run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}.json')
 
-    if "Purely Local" in exe_paths.keys():
-        Total_Volume = get_results.get_total_volume(graph_name, motif)
-        if just_get_volume and Total_Volume is not None:
-            break
-        exe_paths["Purely Local"].append(f"-v:{Total_Volume}")
-
-
-    def system_info():
-        system_info = {
-            "System": platform.system(),
-            "Release": platform.release(),
-            "Version": platform.version(),
-            "Machine": platform.machine(),
-            "Processor": platform.processor(),
-            "Architecture": platform.architecture()
-        }
-        return system_info
+    Total_Volume = get_results.get_total_volume(graph_name, motif)
 
     run_info_dict = {
-        "System Info": system_info(),
+        "System Info": system_info,
         "Graph File":  graph_file,
         "Exicutions": exe_paths,
         "Directed": dataset['directed'],
@@ -81,23 +74,26 @@ for dataset in dataset_list:
         result = {}
         result["Expected Cluster Size"] = len(expected)
         result["Expected Cluster"] = expected
+        result["Run Commands"] = {}
+        result["Out Files"] = {}
         for variant, exe_path in exe_paths.items():
             # Set the log file name
-            out_file = os.path.join(out_files_path, f"{variant.lower()}_seed{seed}_run{run}.json")
+            out_file = os.path.join(out_files_path, f"{variant.lower().replace(' ','_')}_seed{seed}_run{run}.json")
             if not os.path.exists(out_files_path):
                 os.makedirs(out_files_path)
 
             # Run the command and capture the output
             command = exe_path + base_args + [f"-s:{seed}"]
+            if variant == "Purely Local" and Total_Volume:
+                command.append(f"-v:{Total_Volume}")
             # command = ["srun"] + command
 
-            # print(f"Running: {' '.join(command)}")
-            # print(f"\tOutput File: {out_file}")
+            result["Run Commands"][variant] = " ".join(command)
 
             commands.append(subprocess.Popen(command,
                     stdout=open(out_file, 'w'),
                     stderr=subprocess.STDOUT))
-            result[variant] = out_file
+            result["Out Files"][variant] = out_file
 
         run_info_dict["Results"][seed] = result
 

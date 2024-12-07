@@ -19,7 +19,7 @@ def make_graph_results(graph):
             cluseters = {}
             cluseters["Expected"] = set(seed_info_dict["Expected Cluster"])
             for variant in Variants:
-                with open(seed_info_dict[variant]) as f:
+                with open(seed_info_dict["Out Files"][variant]) as f:
                     seed_results_dict = json.load(f)
                     
                     cluseters[variant] = set(seed_results_dict["Found Cluster"])
@@ -30,6 +30,9 @@ def make_graph_results(graph):
                 print(f"Clusters are NOT the same for seed {seed}")
                 print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
                 print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
+                print(f"run commands:")
+                print(f"\t {seed_info_dict['Run Commands']['Local']}")
+                print(f"\t {seed_info_dict['Run Commands']['Purely Local']}")
             else:
                 print("Clusters are the same")
 
@@ -56,7 +59,7 @@ def get_accumilated_graph_results(graph, variant):
     with open(os.path.join(folder, f"run_on_graph_{graph}.json")) as f:
         overal_dict = json.load(f)
         for _, seed_info_dict in overal_dict["Results"].items():
-            with open(seed_info_dict[variant]) as f:
+            with open(seed_info_dict["Out Files"][variant]) as f:
                 seed_results_dict = json.load(f)
                 read_runtimes.append(seed_results_dict["Read Graph Time (seconds)"])
                 weight_runtimes.append(seed_results_dict["Weight Computation Time (seconds)"])
@@ -80,29 +83,22 @@ def make_multigraphs_results(graph_names):
 
     fig, ax = plt.subplots()
 
-    # ax.plot(Variants*len(graph_names), [d["Read Graph"][0] for d in result_dicts], 'o')
-    ax.errorbar(Variants*len(graph_names), [d["Read Graph"][0] for d in result_dicts], yerr=[d["Read Graph"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.errorbar(range(2*len(graph_names)), [d["Read Graph"][0] for d in result_dicts], yerr=[d["Read Graph"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.errorbar(range(2*len(graph_names)), [d["Weight Computation"][0] for d in result_dicts], yerr=[d["Weight Computation"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.errorbar(range(2*len(graph_names)), [d["APPR"][0] for d in result_dicts], yerr=[d["APPR"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.errorbar(range(2*len(graph_names)), [d["Rest"][0] for d in result_dicts], yerr=[d["Rest"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.errorbar(range(2*len(graph_names)), [d["Total"][0] for d in result_dicts], yerr=[d["Total"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
 
-    # ax.plot(Variants*len(graph_names), [d["Weight Computation"][0] for d in result_dicts], 'o')
-    ax.errorbar(Variants*len(graph_names), [d["Weight Computation"][0] for d in result_dicts], yerr=[d["Weight Computation"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
-
-    # ax.plot(Variants*len(graph_names), [d["APPR"][0] for d in result_dicts], 'o')
-    ax.errorbar(Variants*len(graph_names), [d["APPR"][0] for d in result_dicts], yerr=[d["APPR"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
-
-    # ax.plot(Variants*len(graph_names), [d["Rest"][0] for d in result_dicts], 'o')
-    ax.errorbar(Variants*len(graph_names), [d["Rest"][0] for d in result_dicts], yerr=[d["Rest"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
-
-    # ax.plot(Variants*len(graph_names), [d["Total"][0] for d in result_dicts], 'o')
-    ax.errorbar(Variants*len(graph_names), [d["Total"][0] for d in result_dicts], yerr=[d["Total"][1] for d in result_dicts],ecolor='black',marker='o',ls='')
+    ax.set_xticks(range(2*len(graph_names)), labels=Variants*len(graph_names))
 
     # label the graphs:
-    sec = ax.secondary_xaxis(location=0)
+    sec = ax.secondary_xaxis('bottom')
 
     sec.set_xticks([0.5+2*x for x in range(len(graph_names))], labels=graph_names)
     sec.tick_params('x', length=0)
 
     # lines between the classes:
-    sec2 = ax.secondary_xaxis(location=0)
+    sec2 = ax.secondary_xaxis('bottom')
     sec2.set_xticks([-0.5+2*x for x in range(len(graph_names)+1)], labels=[])
     sec2.tick_params('x', length=40, width=1.5)
     sec2.set_label("Graphs and Tool")
@@ -111,7 +107,7 @@ def make_multigraphs_results(graph_names):
     ax.set_ylabel("Time (seconds)")
     ax.set_title("Run Time per Variant per Graph")
     ax.legend(["Read Graph", "Weight Computation", "APPR", "Rest", "Total"])
-    plt.savefig(os.path.join(".", "results", graph, "run_time_per_variant_per_graph.png"))
+    plt.savefig(os.path.join(".", "results", "run_time_per_variant_per_graph.png"))
 
 def get_total_volume(graph, motif):
     folder = os.path.join(".", "results", graph)
@@ -143,7 +139,7 @@ def check_volume(graph):
         for _, seed_info_dict in overal_dict["Results"].items():
             for variant in Variants:
                 if variant in seed_info_dict.keys():
-                    with open(seed_info_dict[variant]) as f:
+                    with open(seed_info_dict["Out Files"][variant]) as f:
                         seed_results_dict = json.load(f)
                         if "Total Volume" in seed_results_dict.keys():
                             if Total_Volume is None:
