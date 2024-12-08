@@ -12,10 +12,16 @@ num_seeds = 100
 rand_seed = None
 
 just_get_volume = False
+syn_or_real = "syn"
 
-dataset_file = f"{os.getcwd()}/real_data_datasets.json"
-with open(dataset_file) as f:
-    dataset_list = json.load(f)
+if syn_or_real == "syn":
+    dataset_file = f"{os.getcwd()}/real_data_datasets.json"
+    with open(dataset_file) as f:
+        dataset_list = json.load(f)
+if syn_or_real == "real":
+    dataset_file = "./syn_data_datasets.json"
+    with open(dataset_file) as f:
+        dataset_list = json.load(f)
     
 # Run paths
 exe_paths = {
@@ -36,10 +42,16 @@ system_info = {
 }
 
 for dataset in dataset_list:
-    graph_name = dataset["name"]
-    graph_file = dataset["graph_path"]
-    seed_data_file = dataset["seed_data_path"]
-    labels_or_lists = dataset["labels_or_lists"]
+    if syn_or_real == "syn":
+        graph_name = dataset["name"]
+        graph_file = os.path.join(dataset["folder"], "network.dat")
+        seed_data_file = os.path.join(dataset["folder"], "comunity.dat")
+        labels_or_lists = "labels"
+    if syn_or_real == "real":
+        graph_name = dataset["name"]
+        graph_file = dataset["graph_path"]
+        seed_data_file = dataset["seed_data_path"]
+        labels_or_lists = dataset["labels_or_lists"]
     motif = dataset["motif"]
     base_args = []
     base_args.append(f"-i:{os.getcwd()+'/'+graph_file}")
@@ -107,17 +119,5 @@ for dataset in dataset_list:
     with open(run_on_graph_file, 'w') as fp:
         json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)
 
-#     for c in commands:
-#         c.wait()
-#         if c.returncode != 0:
-#             print(f"{' '.join(c.args)} \n\t exited with code: {c.returncode}")
-
-#     get_results.check_volume(graph_name)
-
-#     if not just_get_volume:
-#         get_results.make_graph_results(graph_name)
-
-# if not just_get_volume:
-#     get_results.make_multigraphs_results([graph["name"] for graph in dataset_list])
 
 

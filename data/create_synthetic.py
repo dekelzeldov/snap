@@ -23,6 +23,8 @@ for num, n in [('10k', 10000)]: #, ('100k', 100000), ('1m', 1000000)]:
 		base_args = " ".join([f"{k} {v}" for k, v in args_dict.items()])
 		cmd = [relative_script_path] + base_args.split()
 		graphs[graph_name] = args_dict
+		graphs[graph_name]["directed"] = False
+		graphs[graph_name]["motif"] = "clique3"
 		graphs[graph_name]["folder"] = graph_folder
 		graphs[graph_name]["cmd"] = cmd
 		proc = subprocess.Popen(cmd, cwd=graph_folder, stdout=open(os.path.join(graph_folder , "output.txt"), "w"))
