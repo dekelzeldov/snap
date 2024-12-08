@@ -914,6 +914,7 @@ void MAPPR::computeProfile(ProcessedGraph& graph_p) {
       vol = graph_p.getTotalVolume() - vol;
       VolSmall = -1;
     }
+    const NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
     cut += WeightsHere.GetDat(NodeId);
     for (long j = 0; j < NI.GetOutDeg(); j ++) {
       long NbrId = NI.GetOutNId(j);
