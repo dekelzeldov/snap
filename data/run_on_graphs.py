@@ -1,26 +1,26 @@
 
 import get_seeds
-import get_results
 import os
 import subprocess
 import platform
 import json
+import get_results_utils
 
 run=0
 # Generate n random numbers as seeds
-num_seeds = 2
+num_seeds = 100
 rand_seed = None
 
 just_get_volume = False
 
-dataset_file = "./realdata_datasets.json"
+dataset_file = f"{os.getcwd()}/real_data_datasets.json"
 with open(dataset_file) as f:
     dataset_list = json.load(f)
     
 # Run paths
 exe_paths = {
-    "Local": ["../examples/localmotifcluster/localmotifclustermain"],
-    "Purely Local": ["../examples/purelylocalmotifcluster/purelylocalmotifclustermain"],
+    "Local": [f"{os.getcwd()}/../examples/localmotifcluster/localmotifclustermain"],
+    "Purely Local": [f"{os.getcwd()}/../examples/purelylocalmotifcluster/purelylocalmotifclustermain"],
 }
 
 if just_get_volume:
@@ -42,7 +42,7 @@ for dataset in dataset_list:
     labels_or_lists = dataset["labels_or_lists"]
     motif = dataset["motif"]
     base_args = []
-    base_args.append(f"-i:{graph_file}")
+    base_args.append(f"-i:{os.getcwd()+'/'+graph_file}")
     base_args.append(f"-d:{'Y' if dataset['directed'] else 'N'}")
     base_args.append(f"-m:{motif}")
     base_args.append(f"-silent:Y")
@@ -51,11 +51,11 @@ for dataset in dataset_list:
 
     seeds = get_seeds.pick_seeds(seed_data_file, labels_or_lists, num_seeds, seed=rand_seed)
 
-    out_path = os.path.join(".", "results" ,graph_name)
+    out_path = os.path.join(os.getcwd(), "results" ,graph_name)
     out_files_path = os.path.join(out_path, "seeds_results")
     run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}.json')
 
-    Total_Volume = get_results.get_total_volume(graph_name, motif)
+    Total_Volume = get_results_utils.get_total_volume(graph_name, motif)
 
     if just_get_volume and Total_Volume:
         continue
@@ -89,14 +89,15 @@ for dataset in dataset_list:
             command = exe_path + base_args + [f"-s:{seed}"]
             if variant == "Purely Local" and Total_Volume:
                 command.append(f"-v:{Total_Volume}")
-            # command = ["srun"] + command
+            command = ["srun"] + command 
 
             result["Run Commands"][variant] = " ".join(command)
+            result["Out Files"][variant] = out_file
 
             commands.append(subprocess.Popen(command,
                     stdout=open(out_file, 'w'),
                     stderr=subprocess.STDOUT))
-            result["Out Files"][variant] = out_file
+
 
         run_info_dict["Results"][seed] = result
 
@@ -106,17 +107,17 @@ for dataset in dataset_list:
     with open(run_on_graph_file, 'w') as fp:
         json.dump(run_info_dict, fp, separators=(',', ': '), indent=4)
 
-    for c in commands:
-        c.wait()
-        if c.returncode != 0:
-            print(f"{' '.join(c.args)} \n\t exited with code: {c.returncode}")
+#     for c in commands:
+#         c.wait()
+#         if c.returncode != 0:
+#             print(f"{' '.join(c.args)} \n\t exited with code: {c.returncode}")
 
-    get_results.check_volume(graph_name)
+#     get_results.check_volume(graph_name)
 
-    if not just_get_volume:
-        get_results.make_graph_results(graph_name)
+#     if not just_get_volume:
+#         get_results.make_graph_results(graph_name)
 
-if not just_get_volume:
-    get_results.make_multigraphs_results([graph["name"] for graph in dataset_list])
+# if not just_get_volume:
+#     get_results.make_multigraphs_results([graph["name"] for graph in dataset_list])
 
 

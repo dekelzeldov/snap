@@ -1,0 +1,42 @@
+[
+	{
+		"name": "email-Eu-core",
+		"graph_path" : "./real_data/email-Eu-core.txt",
+		"seed_data_path" : "./real_data/email-Eu-core-department-labels.txt",
+		"labels_or_lists" : "labels",
+		"directed" : true,
+		"motif": "m1"
+	},
+	{
+		"name": "com-dblp",
+		"graph_path" : "./real_data/com-dblp.ungraph.txt",
+		"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
+		"labels_or_lists" : "lists",
+		"directed" : false,
+		"motif": "clique3"
+	},
+	{
+		"name": "com-youtube",
+		"graph_path" : "./real_data/com-youtube.ungraph.txt",
+		"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
+		"labels_or_lists" : "lists",
+		"directed" : false,
+		"motif": "clique3"
+	},
+	{
+		"name": "wiki-topcats",
+		"graph_path" : "./real_data/wiki-topcats.txt",
+		"seed_data_path" : "./real_data/wiki-topcats-categories.txt",
+		"labels_or_lists" : "lists",
+		"directed" : true,
+		"motif": "m1"
+	},
+	{
+		"name": "com-orkut",
+		"graph_path" : "./real_data/com-orkut.ungraph.txt",
+		"seed_data_path" : "./real_data/com-orkut.top5000.cmty.txt",
+		"labels_or_lists" : "lists",
+		"directed" : false,
+		"motif": "clique3"
+	}
+]
