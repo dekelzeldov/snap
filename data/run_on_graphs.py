@@ -19,7 +19,7 @@ if syn_or_real == "real":
     with open(dataset_file) as f:
         dataset_list = json.load(f)
 if syn_or_real == "syn":
-    dataset_file = "./synthetic_data_datasets.json"
+    dataset_file = f"{os.getcwd()}/synthetic_data_datasets.json"
     with open(dataset_file) as f:
         dataset_list = json.load(f)
     
