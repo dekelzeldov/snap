@@ -249,7 +249,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
 //  2) assign weights acoordingly
 void ProcessedGraph::assignWeights_undir(int nodeID) {
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
-  Weights(nodeID) = NodeWeightVH(NI.GetOutDeg());
+  Weights(nodeID) = NodeWeightVH(NI.GetDeg());
   int KSize = getCliqueSize(mt);
   if (KSize == 2) {
     // Don't need to count, assign weights directly!
@@ -605,6 +605,7 @@ void ProcessedGraph::assignWeights_dir(int nodeID) {
   }
 
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
+  Weights(nodeID) = NodeWeightVH(Graph_org->GetMxNId());
   float deg_w = 0;
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int NbrId = NI.GetOutNId(e);
