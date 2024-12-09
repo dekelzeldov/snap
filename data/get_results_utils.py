@@ -12,11 +12,9 @@ out_folder = os.path.join(in_folder, "figures")
 def get_dict(file_path):
     try:
         with open(file_path) as f:
-            char = f.read(1)          
-            while char not in ['{', '[']: 
-                char = f.read(1) 
-            f.seek(f.tell() - 1)
-            return json.load(f)
+            content = f.read()
+            first = content.find('{')
+            return json.loads(content[first:])
     except:
         print(f"Error: Failed to read {file_path}")
         return None
@@ -35,6 +33,8 @@ def make_graph_results(graph):
         for variant in Variants:
             seed_results_dict = get_dict(seed_info_dict["Out Files"][variant])
             if not seed_results_dict:
+                print(f"missing result for:")
+                print(f"{seed_info_dict['Run Commands'][variant]} > {seed_info_dict['Out Files'][variant]}")
                 continue
             
             cluseters[variant] = set(seed_results_dict["Found Cluster"])
@@ -55,8 +55,8 @@ def make_graph_results(graph):
     for res, name in [(expected_results, "Ground Truth"), (found_results, "Found")]:
         for log in [True, False]:
             plt.figure()
-            min_y = 0.1
-            max_y = 10
+            min_y = 0.5
+            max_y = 1
             for variant in Variants:
                 xs, ys = zip(*res[variant])
                 xs, ys = np.array(list(xs)), np.array(list(ys))
@@ -70,7 +70,7 @@ def make_graph_results(graph):
                 plt.yscale("log")
                 plt.ylim(min_y, max_y)
             plt.title(f"Run Time vs {name} Cluster Size for {graph}")
-            plt.legend(list(Variants)) 
+            plt.legend(list(Variants), loc = 'lower right') 
             plt.savefig(os.path.join(out_folder, f"run_time_vs_{name.lower().replace(' ', '_')}_cluster_size{'_log' if log else ''}_{graph}.png"))
 
 def get_accumilated_graph_results(graph, variant):
