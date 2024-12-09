@@ -14,12 +14,12 @@ rand_seed = None
 just_get_volume = False
 syn_or_real = "syn"
 
-if syn_or_real == "syn":
+if syn_or_real == "real":
     dataset_file = f"{os.getcwd()}/real_data_datasets.json"
     with open(dataset_file) as f:
         dataset_list = json.load(f)
-if syn_or_real == "real":
-    dataset_file = "./syn_data_datasets.json"
+if syn_or_real == "syn":
+    dataset_file = "./synthetic_data_datasets.json"
     with open(dataset_file) as f:
         dataset_list = json.load(f)
     
@@ -45,7 +45,7 @@ for dataset in dataset_list:
     if syn_or_real == "syn":
         graph_name = dataset["name"]
         graph_file = os.path.join(dataset["folder"], "network.dat")
-        seed_data_file = os.path.join(dataset["folder"], "comunity.dat")
+        seed_data_file = os.path.join(dataset["folder"], "community.dat")
         labels_or_lists = "labels"
     if syn_or_real == "real":
         graph_name = dataset["name"]
