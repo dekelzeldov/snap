@@ -75,18 +75,19 @@ int main(int argc, char* argv[]) {
     Env.GetIfArgPrefixFlt("-a:", 0.98, "alpha");
   const TFlt eps =
     Env.GetIfArgPrefixFlt("-e:", 0.0001, "eps");
-  const TFlt vol =
-    Env.GetIfArgPrefixFlt("-v:", 0, "total volume");
+  const TStr vol_str =
+    Env.GetIfArgPrefixStr("-v:", "0", "total volume");
 
   printf("\"Number of Seeds\": %d, \n", seeds.Len());
   for (int i = 0; i < seeds.Len(); i++) {
     int seed = seeds[i];
     printf("\"Seed\": %d, \n", int(seed));
     MAPPR mappr;
-    int tv;
-    if (vol != TFlt(0)) {
+    long int tv;
+    long int vol = strtol(vol_str.CStr(), NULL, 10);
+    if (vol != 0) {
       tv = vol;
-      printf("\"Input Total Volume\": %d, \n", tv);
+      printf("\"Input Total Volume\": %ld, \n", tv);
     } else {
       graph_p.estimateTotalVolume();
       tv = graph_p.getTotalVolume();
