@@ -905,7 +905,7 @@ void MAPPR::computeProfile(ProcessedGraph& graph_p) {
   for (NodeWeightVH::TIter it = Quotient.BegI(); it < Quotient.EndI(); it++) {
     int NodeId = it->Key;
     TUNGraph::TNodeI NI = graph_p.getTransformedGraph()->GetNI(NodeId);
-    const NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
+    NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
 
     NodeInOrder.Add(NodeId);
     IsIn.AddKey(NodeId);
@@ -914,7 +914,7 @@ void MAPPR::computeProfile(ProcessedGraph& graph_p) {
       vol = graph_p.getTotalVolume() - vol;
       VolSmall = -1;
     }
-    const NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
+    WeightsHere = graph_p.getNodeWeights(NodeId);
     cut += WeightsHere.GetDat(NodeId);
     for (long j = 0; j < NI.GetOutDeg(); j ++) {
       long NbrId = NI.GetOutNId(j);
