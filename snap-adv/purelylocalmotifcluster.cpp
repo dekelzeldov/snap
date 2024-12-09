@@ -249,7 +249,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
 //  2) assign weights acoordingly
 void ProcessedGraph::assignWeights_undir(int nodeID) {
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
-  Weights(nodeID) = NodeWeightVH(NI.GetDeg());
+  // Weights(nodeID) = NodeWeightVH(NI.GetDeg());
   int KSize = getCliqueSize(mt);
   if (KSize == 2) {
     // Don't need to count, assign weights directly!
@@ -291,7 +291,7 @@ void ProcessedGraph::assignWeights_undir(int nodeID) {
 //  2) assign weights
 //  3) obtain the transformed graph
 void ProcessedGraph::prepWeights_undir() {
-  Weights = WeightVH(Graph_org->GetMxNId());
+  // Weights = WeightVH(Graph_org->GetMxNId());
   Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
   TotalVolLB = 0;
   TotalVol = -1;
@@ -605,7 +605,7 @@ void ProcessedGraph::assignWeights_dir(int nodeID) {
   }
 
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
-  Weights(nodeID) = NodeWeightVH(Graph_org->GetMxNId());
+  // Weights(nodeID) = NodeWeightVH(Graph_org->GetMxNId());
   float deg_w = 0;
   for (int e = 0; e < NI.GetOutDeg(); e++) {
     int NbrId = NI.GetOutNId(e);
@@ -633,7 +633,7 @@ void ProcessedGraph::prepWeights_dir() {
   Computed = TVec<bool>(Graph_org->GetMxNId());
   Computed.PutAll(false);
   Graph_trans = TSnap::ConvertGraph<PUNGraph>(Graph_org);
-  Weights = WeightVH(Graph_org->GetMxNId());
+  // Weights = WeightVH(Graph_org->GetMxNId());
   TotalVolLB = 0;
   TotalVol = -1;
 }
@@ -906,7 +906,7 @@ void MAPPR::computeProfile(ProcessedGraph& graph_p) {
   for (NodeWeightVH::TIter it = Quotient.BegI(); it < Quotient.EndI(); it++) {
     int NodeId = it->Key;
     TUNGraph::TNodeI NI = graph_p.getTransformedGraph()->GetNI(NodeId);
-    NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
+    const NodeWeightVH& WeightsHere = graph_p.getNodeWeights(NodeId);
 
     NodeInOrder.Add(NodeId);
     IsIn.AddKey(NodeId);
@@ -915,12 +915,12 @@ void MAPPR::computeProfile(ProcessedGraph& graph_p) {
       vol = graph_p.getTotalVolume() - vol;
       VolSmall = -1;
     }
-    WeightsHere = graph_p.getNodeWeights(NodeId);
-    cut += WeightsHere.GetDat(NodeId);
+    const NodeWeightVH&  NewWeightsHere = graph_p.getNodeWeights(NodeId);
+    cut += NewWeightsHere.GetDat(NodeId);
     for (long j = 0; j < NI.GetOutDeg(); j ++) {
       long NbrId = NI.GetOutNId(j);
       if (IsIn.IsKey(NbrId)) {
-        cut -= 2 * WeightsHere.GetDat(NbrId);
+        cut -= 2 * NewWeightsHere.GetDat(NbrId);
       }
     }
     if (vol) {
