@@ -65,7 +65,7 @@ for dataset in dataset_list:
 
     out_path = os.path.join(os.getcwd(), "results" ,graph_name)
     out_files_path = os.path.join(out_path, "seeds_results")
-    run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}.json')
+    run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}_run{run}.json')
 
     Total_Volume = get_results_utils.get_total_volume(graph_name, motif)
 

@@ -11,7 +11,7 @@ graphs = []
 
 for num, n in [('10k', 10000), ('100k', 100000), ('1m', 1000000)]:
 	for mu in [0.1, 0.5, 0.9]:
-		graph_name = f"network_{num}_mu{mu}_2"
+		graph_name = f"network_{num}_mu{mu}"
 		graph_folder = os.path.join(target_folder, graph_name)
 		os.makedirs(graph_folder, exist_ok=True)
 		args_dict = {
