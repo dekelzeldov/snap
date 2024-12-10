@@ -8,6 +8,14 @@
 		"motif": "m1"
 	},
 	{
+		"name": "com-amazon",
+		"graph_path" : "./real_data/com-amazon.ungraph.txt",
+		"seed_data_path" : "./real_data/com-amazon.top5000.cmty.txt",
+		"labels_or_lists" : "lists",
+		"directed" : false,
+		"motif": "clique3"
+	},
+	{
 		"name": "com-dblp",
 		"graph_path" : "./real_data/com-dblp.ungraph.txt",
 		"seed_data_path" : "./real_data/com-dblp.top5000.cmty.txt",
@@ -32,11 +40,11 @@
 		"motif": "m1"
 	},
 	{
-		"name": "com-orkut",
-		"graph_path" : "./real_data/com-orkut.ungraph.txt",
-		"seed_data_path" : "./real_data/com-orkut.top5000.cmty.txt",
-		"labels_or_lists" : "lists",
-		"directed" : false,
-		"motif": "clique3"
+		"name": "com-livejournal",
+		"graph_path" : "./real_data/com-lj.ungraph.txt",
+		"seed_data_path" : "./real_data/com-lj.top5000.cmty.txt",
+		"labels_or_lists" : "labels",
+		"directed" : true,
+		"motif": "m1"
 	}
 ]
