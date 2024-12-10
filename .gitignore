@@ -65,7 +65,7 @@ benchmarking/*.dat
 examples/localmotifcluster/localmotifclustermain
 examples/purelylocalmotifcluster/purelylocalmotifclustermain
 
-data/real_data/
+data/real_data/*.txt
 data/results/
 data/synthetic_data/
-data/synthetic_data_datasets.json
+

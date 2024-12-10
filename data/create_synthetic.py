@@ -39,5 +39,5 @@ for num, n in [('1k', 1000), ('10k', 10000), ('100k', 100000), ('1m', 1000000)]:
 		# 	print(f"graph_folder: {graph_folder}")
 		# 	print(f"{' '.join(proc.args)} \n\t exited with code: {proc.returncode}")
 
-with open(os.path.join(".", "synthetic_data_datasets.json"), "w") as f:
+with open(os.path.join(target_folder, "synthetic_data_datasets.json"), "w") as f:
     json.dump(graphs, f, separators=(',', ':'), indent=4)

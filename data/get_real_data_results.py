@@ -3,7 +3,7 @@ import get_results_utils
 import json
 
 
-dataset_file = "./real_data_datasets.json"
+dataset_file = "./real_data/real_data_datasets.json"
 with open(dataset_file) as f:
     dataset_list = json.load(f)
 

@@ -15,11 +15,11 @@ just_get_volume = False
 syn_or_real = "real"
 
 if syn_or_real == "real":
-    dataset_file = f"{os.getcwd()}/real_data_datasets.json"
+    dataset_file = f"{os.getcwd()}/real_data/real_data_datasets.json"
     with open(dataset_file) as f:
         dataset_list = json.load(f)
 if syn_or_real == "syn":
-    dataset_file = f"{os.getcwd()}/synthetic_data_datasets.json"
+    dataset_file = f"{os.getcwd()}/synthetic_data/synthetic_data_datasets.json"
     with open(dataset_file) as f:
         dataset_list = json.load(f)
     
