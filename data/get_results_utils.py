@@ -16,10 +16,12 @@ def get_dict(file_path):
             first = content.find('{')
             return json.loads(content[first:])
     except:
-        print(f"Error: Failed to read {file_path}")
+        # print(f"Error: Failed to read {file_path}")
         return None
 
+
 def make_graph_results(graph):
+    # print(f"\tmake_graph_results")
     expected_results = {v: [] for v in Variants}
     found_results = {v: [] for v in Variants}
 
@@ -32,8 +34,8 @@ def make_graph_results(graph):
         for variant in Variants:
             seed_results_dict = get_dict(seed_info_dict["Out Files"][variant])
             if not seed_results_dict:
-                print(f"missing result for:")
-                print(f"\t {seed_info_dict['Run Commands'][variant]} > {seed_info_dict['Out Files'][variant]}")
+                # print(f"missing result for:")
+                print(f"{seed_info_dict['Run Commands'][variant]} > {seed_info_dict['Out Files'][variant]}")
                 continue
             
             cluseters[variant] = set(seed_results_dict["Found Cluster"])
@@ -42,14 +44,15 @@ def make_graph_results(graph):
 
         if "Local" in cluseters.keys() and "Purely Local" in cluseters.keys():
             if cluseters["Local"] != cluseters["Purely Local"]:
-                print(f"Clusters are NOT the same for seed {seed}")
-                print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
-                print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
-                print(f"run commands:")
-                print(f"\t {seed_info_dict['Run Commands']['Local']} > {seed_info_dict['Out Files']['Local']}")
-                print(f"\t {seed_info_dict['Run Commands']['Purely Local']} > {seed_info_dict['Out Files']['Purely Local']}")
-
-    for res, name in [(expected_results, "Ground Truth"), (found_results, "Found")]:
+                # print(f"Clusters are NOT the same for seed {seed}")
+                # print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
+                # print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
+                # print(f"run commands:")
+                # print(f"\t {seed_info_dict['Run Commands']['Local']} > {seed_info_dict['Out Files']['Local']}")
+                print(f"{seed_info_dict['Run Commands']['Purely Local']} > {seed_info_dict['Out Files']['Purely Local']}")
+        
+    # print(f"\tcreating plots")
+    for res, name in [(found_results, "Found")]: # (expected_results, "Ground Truth"), 
         for log in [True, False]:
             plt.figure()
             min_y = 0.5
@@ -109,22 +112,24 @@ def make_multigraphs_results(graph_names):
 def make_speedup_results(dataset_list):
     result_dicts = {}
     for graph in dataset_list:
-        overal_dict = get_dict(os.path.join(in_folder, graph["name"], f"run_on_graph_{graph["name"]}.json"))
+        overal_dict = get_dict(os.path.join(in_folder, graph["name"], f"run_on_graph_{graph['name']}.json"))
         speedups = []
         for _, seed_info_dict in overal_dict["Results"].items():
             p_seed_results_dict = get_dict(seed_info_dict["Out Files"]["Purely Local"])
             if not p_seed_results_dict:
                 print(f"missing result for:")
-                print(f"\t {seed_info_dict['Run Commands']["Purely Local"]} > {seed_info_dict['Out Files']["Purely Local"]}")
+                print(f"\t {seed_info_dict['Run Commands']['Purely Local']} > {seed_info_dict['Out Files']['Purely Local']}")
                 continue
             l_seed_results_dict = get_dict(seed_info_dict["Out Files"]["Local"])
             if not p_seed_results_dict:
                 print(f"missing result for:")
-                print(f"\t {seed_info_dict['Run Commands']["Local"]} > {seed_info_dict['Out Files']["Local"]}")
+                print(f"\t {seed_info_dict['Run Commands']['Local']} > {seed_info_dict['Out Files']['Local']}")
                 continue
-            speedup = p_seed_results_dict["Run Time (seconds)"] / l_seed_results_dict["Run Time (seconds)"]
+            speedup = l_seed_results_dict["Run Time (seconds)"] / p_seed_results_dict["Run Time (seconds)"]
             speedups.append(speedup)
-        result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedup)} \pm {np.std(speedup)}"
+        if graph["-N"] not in result_dicts.keys():
+            result_dicts[graph["-N"]] = {}
+        result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \pm {np.std(speedups)}"
     df = pandas.DataFrame(result_dicts)
     with open(os.path.join(out_folder, "synthetic_graphs_runtimes_speedup_tabel.tex"), 'w') as f:
         f.write(df.to_latex())
