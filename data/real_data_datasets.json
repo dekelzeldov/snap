@@ -43,7 +43,7 @@
 		"name": "com-livejournal",
 		"graph_path" : "./real_data/com-lj.ungraph.txt",
 		"seed_data_path" : "./real_data/com-lj.top5000.cmty.txt",
-		"labels_or_lists" : "labels",
+		"labels_or_lists" : "lists",
 		"directed" : true,
 		"motif": "m1"
 	}
