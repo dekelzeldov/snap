@@ -93,6 +93,8 @@ def make_multigraphs_results(graph_names):
             for _, seed_info_dict in overal_dict["Results"].items():
                 seed_results_dict = get_dict(seed_info_dict["Out Files"][variant])
                 if not seed_results_dict:
+                    print(f"missing result for:")
+                    print(f"{seed_info_dict['Run Commands'][variant]} > {seed_info_dict['Out Files'][variant]}")
                     continue
 
                 read_runtimes.append(seed_results_dict["Read Graph Time (seconds)"])
@@ -140,6 +142,7 @@ def make_speedup_results(dataset_list):
         result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \\pm {np.std(speedups)}"
     df = pandas.DataFrame(result_dicts)
     df = df.reindex(sorted(df.columns), axis=1)
+    df.sort_index()
     with open(os.path.join(out_folder, "synthetic_graphs_runtimes_speedup_tabel.tex"), 'w') as f:
         f.write(df.to_latex())
 
