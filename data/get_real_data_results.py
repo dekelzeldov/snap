@@ -13,5 +13,5 @@ for dataset in dataset_list:
     get_results_utils.check_volume(graph_name)
     get_results_utils.make_graph_results(graph_name)
 
-print(f"creating table")
 get_results_utils.make_multigraphs_results([graph["name"] for graph in dataset_list])
+print("done")

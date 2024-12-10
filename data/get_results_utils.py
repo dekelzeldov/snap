@@ -16,12 +16,12 @@ def get_dict(file_path):
             first = content.find('{')
             return json.loads(content[first:])
     except:
-        # print(f"Error: Failed to read {file_path}")
+        print(f"Error: Failed to read {file_path}")
         return None
 
 
 def make_graph_results(graph):
-    # print(f"\tmake_graph_results")
+    print(f"\tmake_graph_results")
     expected_results = {v: [] for v in Variants}
     found_results = {v: [] for v in Variants}
 
@@ -34,7 +34,7 @@ def make_graph_results(graph):
         for variant in Variants:
             seed_results_dict = get_dict(seed_info_dict["Out Files"][variant])
             if not seed_results_dict:
-                # print(f"missing result for:")
+                print(f"missing result for:")
                 print(f"{seed_info_dict['Run Commands'][variant]} > {seed_info_dict['Out Files'][variant]}")
                 continue
             
@@ -44,20 +44,21 @@ def make_graph_results(graph):
 
         if "Local" in cluseters.keys() and "Purely Local" in cluseters.keys():
             if cluseters["Local"] != cluseters["Purely Local"]:
-                # print(f"Clusters are NOT the same for seed {seed}")
-                # print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
-                # print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
-                # print(f"run commands:")
-                # print(f"\t {seed_info_dict['Run Commands']['Local']} > {seed_info_dict['Out Files']['Local']}")
+                print(f"Clusters are NOT the same for seed {seed}")
+                print(f"\t |Local-Purely|: {len(cluseters['Local']-cluseters['Purely Local'])}")
+                print(f"\t |Purely-Local|: {len(cluseters['Purely Local']-cluseters['Local'])}")
+                print(f"run commands:")
+                print(f"\t {seed_info_dict['Run Commands']['Local']} > {seed_info_dict['Out Files']['Local']}")
                 print(f"{seed_info_dict['Run Commands']['Purely Local']} > {seed_info_dict['Out Files']['Purely Local']}")
         
-    # print(f"\tcreating plots")
+    print(f"\tcreating plots")
     for res, name in [(found_results, "Found")]: # (expected_results, "Ground Truth"), 
         for log in [True, False]:
             plt.figure()
             min_y = 0.5
             max_y = 1
             for variant in Variants:
+                print(f"{len(res[variant])} points")
                 xs, ys = zip(*res[variant])
                 xs, ys = np.array(list(xs)), np.array(list(ys))
                 plt.scatter(xs, ys, alpha=0.5)
@@ -69,12 +70,15 @@ def make_graph_results(graph):
                 plt.xscale("log")
                 plt.yscale("log")
                 plt.ylim(min_y, max_y)
+            else:
+                plt.ylim(bottom=0)
             plt.title(f"Run Time vs {name} Cluster Size for {graph}")
             plt.legend(list(Variants), loc = 'lower right') 
             plt.savefig(os.path.join(out_folder, f"run_time_vs_{name.lower().replace(' ', '_')}_cluster_size{'_log' if log else ''}_{graph}.png"))
 
                 
 def make_multigraphs_results(graph_names):
+    print(f"creating multigraphs table")
     result_dicts = {}
     for graph in graph_names:
         totals = {}
@@ -110,6 +114,7 @@ def make_multigraphs_results(graph_names):
         f.write(df.to_latex())
 
 def make_speedup_results(dataset_list):
+    print(f"creating speedup table")
     result_dicts = {}
     for graph in dataset_list:
         overal_dict = get_dict(os.path.join(in_folder, graph["name"], f"run_on_graph_{graph['name']}.json"))
@@ -131,6 +136,7 @@ def make_speedup_results(dataset_list):
             result_dicts[graph["-N"]] = {}
         result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \pm {np.std(speedups)}"
     df = pandas.DataFrame(result_dicts)
+    df = df.reindex(sorted(df.columns), axis=1)
     with open(os.path.join(out_folder, "synthetic_graphs_runtimes_speedup_tabel.tex"), 'w') as f:
         f.write(df.to_latex())
 
@@ -153,6 +159,7 @@ def set_total_volume(graph, motif, volume):
         json.dump(volume_dict, f)
 
 def check_volume(graph):
+    print(f"\tcheck_volume")
     graph_json = os.path.join(in_folder, graph, f"run_on_graph_{graph}.json")
     save_later = False
     overal_dict = get_dict(graph_json)

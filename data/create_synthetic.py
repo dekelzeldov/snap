@@ -9,15 +9,15 @@ os.makedirs(target_folder, exist_ok=True)
 
 graphs = []
 
-for num, n in [('10k', 10000), ('100k', 100000), ('1m', 1000000)]:
-	for mu in [0.1, 0.5, 0.9]:
+for num, n in [('1k', 1000), ('10k', 10000), ('100k', 100000), ('1m', 1000000)]:
+	for mu in [0.1, 0.3, 0.5, 0.7, 0.9]:
 		graph_name = f"network_{num}_mu{mu}"
 		graph_folder = os.path.join(target_folder, graph_name)
 		os.makedirs(graph_folder, exist_ok=True)
 		args_dict = {
 			"-N": n,
 			"-k": 20,
-			"-maxk": 200,
+			"-maxk": 50,
 			"-mu": mu
 		}
 		base_args = " ".join([f"{k} {v}" for k, v in args_dict.items()])

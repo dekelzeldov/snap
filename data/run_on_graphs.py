@@ -12,7 +12,7 @@ num_seeds = 100
 rand_seed = None
 
 just_get_volume = False
-syn_or_real = "syn"
+syn_or_real = "real"
 
 if syn_or_real == "real":
     dataset_file = f"{os.getcwd()}/real_data_datasets.json"
@@ -52,6 +52,7 @@ for dataset in dataset_list:
         graph_file = dataset["graph_path"]
         seed_data_file = dataset["seed_data_path"]
         labels_or_lists = dataset["labels_or_lists"]
+    print(f"running on {graph_name}")
     motif = dataset["motif"]
     base_args = []
     base_args.append(f"-i:{os.getcwd()+'/'+graph_file}")
@@ -65,7 +66,7 @@ for dataset in dataset_list:
 
     out_path = os.path.join(os.getcwd(), "results" ,graph_name)
     out_files_path = os.path.join(out_path, "seeds_results")
-    run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}_run{run}.json')
+    run_on_graph_file = os.path.join(out_path,f'run_on_graph_{graph_name}.json')
 
     Total_Volume = get_results_utils.get_total_volume(graph_name, motif)
 
@@ -86,6 +87,7 @@ for dataset in dataset_list:
 
     commands = []
     for seed, expected in seeds:
+        print(f"\t seed {seed}")
         result = {}
         result["Expected Cluster Size"] = len(expected)
         result["Expected Cluster"] = expected
@@ -94,6 +96,7 @@ for dataset in dataset_list:
         for variant, exe_path in exe_paths.items():
             # Set the log file name
             out_file = os.path.join(out_files_path, f"{variant.lower().replace(' ','_')}_seed{seed}_run{run}.json")
+            err_file = os.path.join(out_files_path, f"{variant.lower().replace(' ','_')}_seed{seed}_run{run}.err")
             if not os.path.exists(out_files_path):
                 os.makedirs(out_files_path)
 
@@ -108,7 +111,7 @@ for dataset in dataset_list:
 
             commands.append(subprocess.Popen(command,
                     stdout=open(out_file, 'w'),
-                    stderr=subprocess.STDOUT))
+                    stderr=open(err_file, 'w')))
 
 
         run_info_dict["Results"][seed] = result
