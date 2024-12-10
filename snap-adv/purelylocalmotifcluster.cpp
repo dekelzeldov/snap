@@ -140,7 +140,7 @@ bool higherDeg(PUNGraph& G, int nodeID1, int nodeID2) {
 }
 
 // This function counts the undirected graph motif (clique) instances on each edge of a node.
-void ProcessedGraph::countClique(int nodeID, int KSize, TIntV& PrevNodes) {
+void ProcessedGraph::countClique(TInt nodeID, int KSize, TIntV& PrevNodes) {
   // Each edge means a (level+2)-clique in the original graph!
   if (Computed[nodeID]) {
     return;
@@ -247,7 +247,7 @@ void ProcessedGraph::countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int l
 // Functions for undirected graph that
 //  1) counts motifs on each edge of the given nodes
 //  2) assign weights acoordingly
-void ProcessedGraph::assignWeights_undir(int nodeID) {
+void ProcessedGraph::assignWeights_undir(TInt nodeID) {
   TUNGraph::TNodeI NI = Graph_org->GetNI(nodeID);
   // Weights(nodeID) = NodeWeightVH(NI.GetDeg());
   int KSize = getCliqueSize(mt);
@@ -512,7 +512,7 @@ bool higherDeg(PNGraph& G, int nodeID1, int nodeID2) {
 }
 
 // To count the directed triangle motifs of a node
-void ProcessedGraph::countDirTriadMotif(int nodeID) {
+void ProcessedGraph::countDirTriadMotif(TInt nodeID) {
   int numBasicDirMtf = 9;  
 
   if (Computed[nodeID]) {
@@ -536,8 +536,8 @@ void ProcessedGraph::countDirTriadMotif(int nodeID) {
     }
     if (!Counts.IsKey(nbrID)) {
       TNGraph::TNodeI nbrNI = Graph_org_dir->GetNI(nbrID);
-      for (int e = 0; e < nbrNI.GetDeg(); e++) {
-        int nbrnbrID = nbrNI.GetNbrNId(e);
+      for (long e = 0; e < nbrNI.GetDeg(); e++) {
+        long nbrnbrID = nbrNI.GetNbrNId(e);
         Counts(nbrID)(nbrnbrID) = TIntV(numBasicDirMtf);
       }
     }
@@ -547,15 +547,15 @@ void ProcessedGraph::countDirTriadMotif(int nodeID) {
       Counts(nbrID)(nodeID)[0] ++;
     }
   }
-  for (int e = 0; e < NI.GetInDeg(); e++) {
-    int nbrID = NI.GetInNId(e);
+  for (long e = 0; e < NI.GetInDeg(); e++) {
+    long nbrID = NI.GetInNId(e);
     if (!Computed[nbrID]) {
       Dependants(nodeID).AddKey(nbrID);
     }
     if (!Counts.IsKey(nbrID)) {
       TNGraph::TNodeI nbrNI = Graph_org_dir->GetNI(nbrID);
-      for (int e = 0; e < nbrNI.GetDeg(); e++) {
-        int nbrnbrID = nbrNI.GetNbrNId(e);
+      for (long e = 0; e < nbrNI.GetDeg(); e++) {
+        long nbrnbrID = nbrNI.GetNbrNId(e);
         Counts(nbrID)(nbrnbrID) = TIntV(numBasicDirMtf);
       }
     }
@@ -572,10 +572,11 @@ void ProcessedGraph::countDirTriadMotif(int nodeID) {
       }
     }
   }
+
   PNGraph subGraph = TSnap::GetSubGraph(Graph_org_dir, neighborsID);
   for (TNGraph::TEdgeI EI = subGraph->BegEI(); EI < subGraph->EndEI(); EI ++ ) { 
-    int srcNId = EI.GetSrcNId();
-    int dstNId = EI.GetDstNId();
+    long srcNId = EI.GetSrcNId();
+    long dstNId = EI.GetDstNId();
     int MotifNumber = 0;
     if (srcNId > dstNId || !subGraph->IsEdge(dstNId, srcNId)) {
       MotifNumber = checkTriadMotif(Graph_org_dir, nodeID, srcNId, dstNId);
@@ -596,7 +597,7 @@ void ProcessedGraph::countDirTriadMotif(int nodeID) {
 //  1) counts motifs on each edge of a nodes
 //  2) assign weights
 //  3) obtain the transformed graph
-void ProcessedGraph::assignWeights_dir(int nodeID) {
+void ProcessedGraph::assignWeights_dir(TInt nodeID) {
   countDirTriadMotif(nodeID);
   while (Dependants(nodeID).BegI() < Dependants(nodeID).EndI()) {
     int key = Dependants(nodeID).BegI().GetKey();
@@ -638,7 +639,7 @@ void ProcessedGraph::prepWeights_dir() {
   TotalVol = -1;
 }
 
-NodeWeightVH &ProcessedGraph::getNodeWeights(int nodeID) {
+NodeWeightVH &ProcessedGraph::getNodeWeights(TInt nodeID) {
 	if (!Weights.IsKey(nodeID)) { 
     assignWeights(nodeID);
   }
@@ -894,7 +895,7 @@ void MAPPR::computeAPPR(ProcessedGraph& graph_p, const int SeedNodeId, float alp
 void MAPPR::computeProfile(ProcessedGraph& graph_p) {
   NodeWeightVH Quotient;
   for (NodeWeightVH::TIter it = appr_vec.BegI(); it < appr_vec.EndI(); it++) {
-    int NodeId = it->Key;
+    TInt NodeId = it->Key;
     Quotient(NodeId) = it->Dat / graph_p.getNodeWeights(NodeId).GetDat(NodeId);
   }
   Quotient.SortByDat(false);

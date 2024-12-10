@@ -99,7 +99,7 @@ class ProcessedGraph {
   // Input {TIntV& PrevNodes} denotes a set of nodes that are directed connected to any node in the current graph G
   //    and {int level = PrevNodes.Len()} is the number of PreNodes. Therefore, any k-clique in G corresponds to 
   //    a (k+level)-clique after all nodes in PrevNodes are added in the current graph G.
-  void countClique(int nodeID, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
+  void countClique(TInt nodeID, int KSize, TIntV& PrevNodes); // Level == 0, Node NI
   void countClique(PUNGraph& G, int KSize, TIntV& PrevNodes, int level);
 
   // This function sets MtfInclude to the motif types that are included in the motif type {mt}
@@ -107,7 +107,7 @@ class ProcessedGraph {
 
   // This function counts the directed graph motif instances on each edge.
   // void countDirEdgeMotif(PNGraph graph);
-  void countDirTriadMotif(int nodeID);
+  void countDirTriadMotif(TInt nodeID);
 
 
  public :
@@ -125,11 +125,11 @@ class ProcessedGraph {
   //  2) assign weights
   //  3) obtain the transformed graph
   void prepWeights_undir();
-  void assignWeights_undir(int nodeID);
+  void assignWeights_undir(TInt nodeID);
   void prepWeights_dir(); 
-  void assignWeights_dir(int nodeID); 
-  void assignWeights(int nodeID) { Directed ? assignWeights_dir(nodeID) : assignWeights_undir(nodeID); };
-  NodeWeightVH& getNodeWeights(int nodeID);
+  void assignWeights_dir(TInt nodeID); 
+  void assignWeights(TInt nodeID) { Directed ? assignWeights_dir(nodeID) : assignWeights_undir(nodeID); };
+  NodeWeightVH& getNodeWeights(TInt nodeID);
   
   // Output and printing
   PUNGraph getOriginalGraph() const {return Graph_org; };
