@@ -67,4 +67,4 @@ examples/purelylocalmotifcluster/purelylocalmotifclustermain
 
 data/real_data/
 data/results/
-data/synthetic_data/*
+data/synthetic_data/
