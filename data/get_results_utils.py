@@ -89,21 +89,24 @@ def make_multigraphs_results(graph_names):
             rest_runtimes = []
             total_runtimes = []
             overal_dict = get_dict(os.path.join(in_folder, graph, f"run_on_graph_{graph}.json"))
+
             for _, seed_info_dict in overal_dict["Results"].items():
                 seed_results_dict = get_dict(seed_info_dict["Out Files"][variant])
                 if not seed_results_dict:
                     continue
+
                 read_runtimes.append(seed_results_dict["Read Graph Time (seconds)"])
                 weight_runtimes.append(seed_results_dict["Weight Computation Time (seconds)"])
                 appr_runtimes.append(seed_results_dict["APPR Time (seconds)"])
                 total_runtimes.append(seed_results_dict["Run Time (seconds)"])
                 rest_runtimes.append(total_runtimes[-1] - sum([read_runtimes[-1], weight_runtimes[-1], appr_runtimes[-1]]))
+
             result_dicts[(graph, variant)] = {
-                "Read Graph": f"{np.mean(read_runtimes)} \pm {np.std(read_runtimes)}",
-                "Weight Computation": f"{np.mean(weight_runtimes)} \pm {np.std(weight_runtimes)}",
-                "APPR": f"{np.mean(appr_runtimes)} \pm {np.std(appr_runtimes)}",
-                "Rest": f"{np.mean(rest_runtimes)} \pm {np.std(rest_runtimes)}",
-                "Total": f"{np.mean(total_runtimes)} \pm {np.std(total_runtimes)}",
+                "Read Graph": f"{np.mean(read_runtimes)} \\pm {np.std(read_runtimes)}",
+                "Weight Computation": f"{np.mean(weight_runtimes)} \\pm {np.std(weight_runtimes)}",
+                "APPR": f"{np.mean(appr_runtimes)} \\pm {np.std(appr_runtimes)}",
+                "Rest": f"{np.mean(rest_runtimes)} \\pm {np.std(rest_runtimes)}",
+                "Total": f"{np.mean(total_runtimes)} \\pm {np.std(total_runtimes)}",
                 "speedup": "N/A"
             }
             totals[variant] = total_runtimes
@@ -134,7 +137,7 @@ def make_speedup_results(dataset_list):
             speedups.append(speedup)
         if graph["-N"] not in result_dicts.keys():
             result_dicts[graph["-N"]] = {}
-        result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \pm {np.std(speedups)}"
+        result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \\pm {np.std(speedups)}"
     df = pandas.DataFrame(result_dicts)
     df = df.reindex(sorted(df.columns), axis=1)
     with open(os.path.join(out_folder, "synthetic_graphs_runtimes_speedup_tabel.tex"), 'w') as f:
