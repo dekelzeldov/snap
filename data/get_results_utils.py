@@ -73,15 +73,17 @@ def make_graph_results(graph):
             else:
                 plt.ylim(bottom=0)
             plt.title(f"Run Time vs {name} Cluster Size for {graph}")
-            plt.legend(list(Variants), loc = 'lower right') 
+            plt.legend(["L-MAPPR", "MAPPR"], loc = 'lower right') 
             plt.savefig(os.path.join(out_folder, f"run_time_vs_{name.lower().replace(' ', '_')}_cluster_size{'_log' if log else ''}_{graph}.png"))
 
                 
 def make_multigraphs_results(graph_names):
     print(f"creating multigraphs table")
     result_dicts = {}
+    result_dicts_2 = {}
     for graph in graph_names:
         totals = {}
+        clusters_sizes = []
         for variant in Variants:
             read_runtimes = []
             weight_runtimes = []
@@ -102,8 +104,9 @@ def make_multigraphs_results(graph_names):
                 appr_runtimes.append(seed_results_dict["APPR Time (seconds)"])
                 total_runtimes.append(seed_results_dict["Run Time (seconds)"])
                 rest_runtimes.append(total_runtimes[-1] - sum([read_runtimes[-1], weight_runtimes[-1], appr_runtimes[-1]]))
-
-            result_dicts[(graph, variant)] = {
+                clusters_sizes.append(seed_results_dict["Found Cluster Size"])
+            var_name = "L-MAPPR" if variant=="Purely Local" else "MAPPR"
+            result_dicts[(graph, var_name)] = {
                 "Read Graph": f"{np.mean(read_runtimes)} \\pm {np.std(read_runtimes)}",
                 "Weight Computation": f"{np.mean(weight_runtimes)} \\pm {np.std(weight_runtimes)}",
                 "APPR": f"{np.mean(appr_runtimes)} \\pm {np.std(appr_runtimes)}",
@@ -113,17 +116,24 @@ def make_multigraphs_results(graph_names):
             }
             totals[variant] = total_runtimes
         speedup = np.array(totals["Local"]) / np.array(totals["Purely Local"])
-        result_dicts[(graph, "Purely Local")]["speedup"] = f"{np.mean(speedup)} \pm {np.std(speedup)}"
+        result_dicts_2[graph] = {}
+        result_dicts_2[graph]["speedup"] = f"{np.mean(speedup)} \pm {np.std(speedup)}"
+        result_dicts_2[graph]["clusters_sizes"] = f"{np.mean(clusters_sizes)} \pm {np.std(clusters_sizes)}"
     df = pandas.DataFrame(result_dicts)
     with open(os.path.join(out_folder, "real_graphs_runtimes_tabel.tex"), 'w') as f:
+        f.write(df.to_latex())
+    df = pandas.DataFrame(result_dicts_2)
+    with open(os.path.join(out_folder, "real_graphs_speedup_and_clusters_tabel.tex"), 'w') as f:
         f.write(df.to_latex())
 
 def make_speedup_results(dataset_list):
     print(f"creating speedup table")
-    result_dicts = {}
+    speedup_dicts = {}
+    sizes_dicts = {}
     for graph in dataset_list:
         overal_dict = get_dict(os.path.join(in_folder, graph["name"], f"run_on_graph_{graph['name']}.json"))
         speedups = []
+        clusters_sizes = []
         for _, seed_info_dict in overal_dict["Results"].items():
             p_seed_results_dict = get_dict(seed_info_dict["Out Files"]["Purely Local"])
             if not p_seed_results_dict:
@@ -137,13 +147,22 @@ def make_speedup_results(dataset_list):
                 continue
             speedup = l_seed_results_dict["Run Time (seconds)"] / p_seed_results_dict["Run Time (seconds)"]
             speedups.append(speedup)
-        if graph["-N"] not in result_dicts.keys():
-            result_dicts[graph["-N"]] = {}
-        result_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \\pm {np.std(speedups)}"
-    df = pandas.DataFrame(result_dicts)
+            clusters_sizes.append(l_seed_results_dict["Found Cluster Size"])
+            clusters_sizes.append(p_seed_results_dict["Found Cluster Size"])
+        if graph["-N"] not in speedup_dicts.keys():
+            speedup_dicts[graph["-N"]] = {}
+            sizes_dicts[graph["-N"]] = {}
+        speedup_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(speedups)} \\pm {np.std(speedups)}"
+        sizes_dicts[graph["-N"]][graph["-mu"]] = f"{np.mean(clusters_sizes)} \\pm {np.std(clusters_sizes)}"
+    df = pandas.DataFrame(speedup_dicts)
     df = df.reindex(sorted(df.columns), axis=1)
     df.sort_index()
     with open(os.path.join(out_folder, "synthetic_graphs_runtimes_speedup_tabel.tex"), 'w') as f:
+        f.write(df.to_latex())
+    df = pandas.DataFrame(sizes_dicts)
+    df = df.reindex(sorted(df.columns), axis=1)
+    df.sort_index()
+    with open(os.path.join(out_folder, "synthetic_graphs_clusters_sizes_tabel.tex"), 'w') as f:
         f.write(df.to_latex())
 
 

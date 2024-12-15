@@ -12,6 +12,7 @@ for dataset in dataset_list:
     graph_name = dataset["name"]
     print(f"analizing {graph_name}")
     get_results_utils.check_volume(graph_name)
+    get_results_utils.make_graph_results(graph_name)
 
 if not just_get_volume:
     get_results_utils.make_speedup_results(dataset_list)
